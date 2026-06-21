@@ -21,7 +21,7 @@ const Feed = () => {
 
     }, [])
     return (
-        <div className='max-w-6xl   mx-auto   px-[30px] py-[30px]  '>
+        <div className='max-w-6xl mx-auto px-[30px] py-[30px]  '>
             <h1 className='text-center font-extrabold text-[30px]'>GALLERY</h1>
             <div>
                     <button className='border-2 border-gray-600 text-white bg-green-600 px-5 py-3 font-extrabold rounded-md' onClick={()=>{navigate("/")}}>HomePage</button>
