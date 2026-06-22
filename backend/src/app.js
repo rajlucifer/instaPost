@@ -8,6 +8,7 @@ const uploadFile = require("../src/services/storage.service");
 const postModel = require("../src/models.js/post");
 
 //using the cors 
+
 const cors = require("cors");
 
 
@@ -34,7 +35,8 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
         caption:req.body.caption
     });
     res.status(201).json({
-        message:"Data Successfully Uploaded"
+        message:"Data Successfully Uploaded",
+        result:result,
     })
 
      
