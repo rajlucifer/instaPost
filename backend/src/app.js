@@ -48,9 +48,22 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
 
         const result = await uploadFile(req.file.buffer);
         
+        let tags = [];
+        if (req.body.tags) {
+            if (typeof req.body.tags === 'string') {
+                tags = req.body.tags
+                    .split(/[,,;]/)
+                    .map(tag => tag.trim().replace(/^#/, ""))
+                    .filter(tag => tag.length > 0);
+            } else if (Array.isArray(req.body.tags)) {
+                tags = req.body.tags.map(tag => tag.trim().replace(/^#/, "")).filter(tag => tag.length > 0);
+            }
+        }
+
         const post = await postModel.create({
             image:result.url,
-            caption:req.body.caption
+            caption:req.body.caption,
+            tags:tags
         });
 
         res.status(201).json({

@@ -10,6 +10,7 @@ const CreatePost = () => {
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(null);
     const [caption, setCaption] = useState('');
+    const [tags, setTags] = useState('');
     const [isDragOver, setIsDragOver] = useState(false);
     const [imageFile, setImageFile] = useState(null);
 
@@ -69,6 +70,7 @@ const CreatePost = () => {
         const formData = new FormData();
         formData.append('image', imageFile);
         formData.append('caption', caption.trim());
+        formData.append('tags', tags.trim());
 
         try {
             await axios.post("http://localhost:3000/create-post", formData);
@@ -177,6 +179,20 @@ const CreatePost = () => {
                                 placeholder="Write something captivating about this moment..."
                                 rows={3}
                                 className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/40 text-slate-900 dark:text-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                            />
+                        </div>
+
+                        {/* Tags Field */}
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                Tags / Hashtags <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(comma-separated)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={tags}
+                                onChange={(e) => setTags(e.target.value)}
+                                placeholder="e.g. nature, summer, vibes"
+                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/40 text-slate-900 dark:text-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                             />
                         </div>
 

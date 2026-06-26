@@ -15,10 +15,22 @@ const Feed = () => {
     const [likeCounts, setLikeCounts] = useState({});
     const [filterType, setFilterType] = useState('all'); // 'all' or 'liked'
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'most-liked'
+    const [selectedTag, setSelectedTag] = useState(null);
     const [activeLightboxIndex, setActiveLightboxIndex] = useState(null);
     
     const navigate = useNavigate();
     const { showToast } = useToast();
+
+    // Extract unique tags from all posts
+    const allTags = React.useMemo(() => {
+        const tagsSet = new Set();
+        posts.forEach(post => {
+            if (post.tags && Array.isArray(post.tags)) {
+                post.tags.forEach(tag => tagsSet.add(tag.toLowerCase()));
+            }
+        });
+        return Array.from(tagsSet);
+    }, [posts]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -113,7 +125,8 @@ const Feed = () => {
         .filter(post => {
             const matchesSearch = post.caption.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesFilter = filterType === 'liked' ? !!likedPosts[post._id] : true;
-            return matchesSearch && matchesFilter;
+            const matchesTag = selectedTag ? (post.tags && post.tags.some(tag => tag.toLowerCase() === selectedTag.toLowerCase())) : true;
+            return matchesSearch && matchesFilter && matchesTag;
         })
         .sort((a, b) => {
             if (sortBy === 'newest') {
@@ -239,6 +252,36 @@ const Feed = () => {
                 </div>
             </div>
 
+            {/* Tag Filter Pills */}
+            {allTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mb-8 animate-fade-in">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mr-2">Popular Tags:</span>
+                    <button
+                        onClick={() => setSelectedTag(null)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                            !selectedTag
+                                ? 'bg-indigo-500 text-white shadow-sm shadow-indigo-500/20'
+                                : 'bg-slate-100 text-slate-650 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                        All
+                    </button>
+                    {allTags.map(tag => (
+                        <button
+                            key={tag}
+                            onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                                selectedTag === tag
+                                    ? 'bg-indigo-500 text-white shadow-sm shadow-indigo-500/20'
+                                    : 'bg-slate-100 text-slate-650 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            #{tag}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {/* Content Feed Section */}
             {loading ? (
                 /* Skeleton Loader Grid */
@@ -302,6 +345,26 @@ const Feed = () => {
                                     <p className="text-slate-800 dark:text-slate-200 font-medium text-sm leading-relaxed first-letter:uppercase">
                                         {post.caption}
                                     </p>
+                                    {post.tags && post.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 mt-3">
+                                            {post.tags.map((tag, idx) => (
+                                                <span
+                                                    key={idx}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedTag(selectedTag === tag ? null : tag);
+                                                    }}
+                                                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 ${
+                                                        selectedTag === tag
+                                                            ? 'bg-indigo-500 text-white'
+                                                            : 'bg-indigo-50 text-indigo-550 dark:bg-indigo-950/40 dark:text-indigo-400'
+                                                    }`}
+                                                >
+                                                    #{tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Interactive Action Area */}
@@ -343,11 +406,13 @@ const Feed = () => {
                         <AlertCircle className="h-6 w-6" />
                     </div>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                        {searchTerm ? 'No search results found' : 'Gallery is empty'}
+                        {searchTerm ? 'No search results found' : selectedTag ? `No posts under #${selectedTag}` : 'Gallery is empty'}
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-sm">
                         {searchTerm 
                             ? `We couldn't find any posts matching "${searchTerm}". Try checking your spelling or searching for another keyword.`
+                            : selectedTag
+                            ? `No posts found tagged with #${selectedTag} in the current view.`
                             : filterType === 'liked'
                             ? "You haven't liked any posts yet. Go ahead and add some to your favorites!"
                             : "Be the first to share an inspiring moment! Click the button below to upload your first image."
@@ -427,6 +492,22 @@ const Feed = () => {
                                 <p className="text-slate-100 text-base leading-relaxed font-medium first-letter:uppercase">
                                     {lightboxPost.caption}
                                 </p>
+                                {lightboxPost.tags && lightboxPost.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mt-4">
+                                        {lightboxPost.tags.map((tag, idx) => (
+                                            <span
+                                                key={idx}
+                                                onClick={() => {
+                                                    setSelectedTag(tag);
+                                                    setActiveLightboxIndex(null);
+                                                }}
+                                                className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-indigo-400 hover:bg-indigo-500 hover:text-white cursor-pointer transition-all"
+                                            >
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mt-8 pt-6 border-t border-slate-800/80 space-y-5">
