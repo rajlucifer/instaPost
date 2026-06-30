@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { 
     Search, Heart, Share2, Download, Copy, LayoutGrid, 
     AlertCircle, PlusCircle, X, ChevronLeft, ChevronRight, 
-    SlidersHorizontal, TrendingUp, Sparkles 
+    SlidersHorizontal, TrendingUp, Sparkles, Trash2, Clock
 } from 'lucide-react';
 
 const Feed = () => {
@@ -23,6 +23,26 @@ const Feed = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const { currentTheme } = useTheme();
+
+    const timeAgo = (dateStr) => {
+        if (!dateStr) return '';
+        const now = new Date();
+        const past = new Date(dateStr);
+        const diffInSeconds = Math.floor((now - past) / 1000);
+        
+        if (diffInSeconds < 60) return 'just now';
+        
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays < 7) return `${diffInDays}d ago`;
+        
+        return past.toLocaleDateString();
+    };
 
     const allTags = React.useMemo(() => {
         const tagsSet = new Set();
@@ -46,12 +66,7 @@ const Feed = () => {
 
             const initialCounts = {};
             data.forEach(post => {
-                let hash = 0;
-                for (let i = 0; i < post._id.length; i++) {
-                    hash = post._id.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const baseLikes = Math.abs(hash % 245) + 12;
-                initialCounts[post._id] = baseLikes + (initialLikes[post._id] ? 1 : 0);
+                initialCounts[post._id] = post.likes || 0;
             });
             setLikeCounts(initialCounts);
         } catch (error) {
@@ -66,7 +81,7 @@ const Feed = () => {
         fetchData();
     }, []);
 
-    const toggleLike = (postId) => {
+    const toggleLike = async (postId) => {
         const currentLiked = !!likedPosts[postId];
         const newLiked = { ...likedPosts, [postId]: !currentLiked };
         setLikedPosts(newLiked);
@@ -79,6 +94,11 @@ const Feed = () => {
 
         if (!currentLiked) {
             showToast('Added to your favorites!', 'success');
+            try {
+                await axios.put(`http://localhost:3000/posts/${postId}/like`);
+            } catch (error) {
+                console.error("Error liking post:", error);
+            }
         }
     };
 
@@ -116,6 +136,21 @@ const Feed = () => {
         } catch (error) {
             window.open(imageUrl, '_blank');
             showToast('Opening image in a new tab...', 'info');
+        }
+    };
+
+    const handleDelete = async (postId) => {
+        if (!window.confirm("Are you sure you want to delete this post?")) return;
+        try {
+            await axios.delete(`http://localhost:3000/posts/${postId}`);
+            setPosts(posts.filter(p => p._id !== postId));
+            showToast('Post deleted successfully', 'success');
+            if (activeLightboxIndex !== null) {
+                setActiveLightboxIndex(null);
+            }
+        } catch (error) {
+            console.error(error);
+            showToast('Failed to delete post', 'error');
         }
     };
 
@@ -321,7 +356,7 @@ const Feed = () => {
                                         <Download className="h-3.5 w-3.5" />
                                     </button>
                                     <button
-                                        onClick={() => handleCopyCaption(post.caption)}
+                                        onClick={(e) => { e.stopPropagation(); handleCopyCaption(post.caption); }}
                                         className="h-8 w-8 flex items-center justify-center bg-white/90 dark:bg-slate-950/80 backdrop-blur text-slate-600 dark:text-slate-300 hover:text-white rounded-lg hover:scale-105 transition-all shadow-md cursor-pointer"
                                         style={{ '--hover-bg': 'var(--gradient)' }}
                                         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gradient)'}
@@ -329,11 +364,23 @@ const Feed = () => {
                                     >
                                         <Copy className="h-3.5 w-3.5" />
                                     </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(post._id); }}
+                                        className="h-8 w-8 flex items-center justify-center bg-white/90 dark:bg-slate-950/80 backdrop-blur text-red-500 hover:bg-red-500 hover:text-white rounded-lg hover:scale-105 transition-all shadow-md cursor-pointer ml-1"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
                             </div>
 
                             <div className="p-4 flex flex-col flex-1">
                                 <div className="flex-1">
+                                    {post.createdAt && (
+                                        <div className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500 mb-1.5 font-medium">
+                                            <Clock className="h-3 w-3" />
+                                            <span>{timeAgo(post.createdAt)}</span>
+                                        </div>
+                                    )}
                                     <p className="text-slate-800 dark:text-slate-200 font-medium text-sm leading-relaxed line-clamp-2 first-letter:uppercase">
                                         {post.caption}
                                     </p>
@@ -491,6 +538,12 @@ const Feed = () => {
                                 >
                                     Post Details
                                 </span>
+                                {lightboxPost.createdAt && (
+                                    <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mt-1 font-medium">
+                                        <Clock className="h-3 w-3" />
+                                        <span>{timeAgo(lightboxPost.createdAt)}</span>
+                                    </div>
+                                )}
                                 <p className="text-slate-800 dark:text-slate-200 text-base leading-relaxed font-medium mt-3 first-letter:uppercase">
                                     {lightboxPost.caption}
                                 </p>
@@ -559,6 +612,13 @@ const Feed = () => {
                                     >
                                         <Share2 className="h-4 w-4 mb-1" />
                                         <span className="text-[10px] font-medium">Share</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDelete(lightboxPost._id)}
+                                        className="flex flex-col items-center justify-center p-2.5 rounded-xl transition-all cursor-pointer bg-red-100 text-red-500 hover:bg-red-500 hover:text-white dark:bg-red-900/30 col-span-3 mt-2"
+                                    >
+                                        <Trash2 className="h-4 w-4 mb-1" />
+                                        <span className="text-[10px] font-medium">Delete Post</span>
                                     </button>
                                 </div>
                             </div>

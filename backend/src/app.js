@@ -80,7 +80,7 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
 });
 app.get("/posts",async(req,res)=>{
     try {
-        const post = await postModel.find();
+        const post = await postModel.find().sort({ createdAt: -1 });
         res.status(200).json({
             message:"successfully data fetched",
             data:post
@@ -90,6 +90,34 @@ app.get("/posts",async(req,res)=>{
         res.status(500).json({
             message: "Internal server error during post retrieval"
         });
+    }
+});
+
+app.put("/posts/:id/like", async(req, res) => {
+    try {
+        const post = await postModel.findById(req.params.id);
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+        post.likes = (post.likes || 0) + 1;
+        await post.save();
+        res.status(200).json({ message: "Post liked", data: post });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error during like" });
+    }
+});
+
+app.delete("/posts/:id", async(req, res) => {
+    try {
+        const post = await postModel.findByIdAndDelete(req.params.id);
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+        res.status(200).json({ message: "Post deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error during delete" });
     }
 });
 
