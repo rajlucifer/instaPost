@@ -208,14 +208,20 @@ const Feed = () => {
                         Discover beautiful moments captured by the community
                     </p>
                 </div>
-                <button
-                    onClick={() => navigate('/')}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer animate-slide-up"
-                    style={{ background: 'var(--gradient)' }}
-                >
-                    <PlusCircle className="h-4 w-4" />
-                    New Post
-                </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 animate-slide-up w-full sm:w-auto">
+                    <div className="text-xs px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between sm:justify-start gap-2.5 font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: posts.length >= 15 ? '#ef4444' : 'var(--primary)' }} />
+                        <span>Storage: {posts.length} / 15 slots</span>
+                    </div>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                        style={{ background: 'var(--gradient)' }}
+                    >
+                        <PlusCircle className="h-4 w-4" />
+                        New Post
+                    </button>
+                </div>
             </div>
 
             {/* Search + Filters */}

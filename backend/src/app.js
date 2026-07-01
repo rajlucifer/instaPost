@@ -46,6 +46,25 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
             return res.status(400).json({ message: "No caption provided" });
         }
 
+        // Check total limit (max 15)
+        const totalCount = await postModel.countDocuments();
+        if (totalCount >= 15) {
+            return res.status(400).json({ 
+                message: "Total limit reached. You can only have up to 15 photos. Please delete some photos to add more." 
+            });
+        }
+
+        // Check daily limit (max 3 in 24 hours)
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const dailyCount = await postModel.countDocuments({
+            createdAt: { $gte: twentyFourHoursAgo }
+        });
+        if (dailyCount >= 3) {
+            return res.status(400).json({ 
+                message: "Daily limit reached. You can only upload up to 3 photos in a day (24-hour period)." 
+            });
+        }
+
         const result = await uploadFile(req.file.buffer);
         
         let tags = [];
@@ -78,6 +97,40 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
         });
     }
 });
+app.get("/posts/limit-status", async (req, res) => {
+    try {
+        const totalCount = await postModel.countDocuments();
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const dailyCount = await postModel.countDocuments({
+            createdAt: { $gte: twentyFourHoursAgo }
+        });
+
+        let nextUploadAvailableAt = null;
+        if (dailyCount >= 3) {
+            const oldestPostInWindow = await postModel.findOne({
+                createdAt: { $gte: twentyFourHoursAgo }
+            }).sort({ createdAt: 1 });
+
+            if (oldestPostInWindow) {
+                nextUploadAvailableAt = new Date(oldestPostInWindow.createdAt.getTime() + 24 * 60 * 60 * 1000);
+            }
+        }
+
+        res.status(200).json({
+            totalCount,
+            totalLimit: 15,
+            dailyCount,
+            dailyLimit: 3,
+            nextUploadAvailableAt
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Internal server error while fetching limit status"
+        });
+    }
+});
+
 app.get("/posts",async(req,res)=>{
     try {
         const post = await postModel.find().sort({ createdAt: -1 });
