@@ -57,7 +57,8 @@ const Feed = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await axios.get("http://localhost:3000/posts");
+            // const res = await axios.get("http://localhost:3000/posts"); local connection
+            const res = await axios.get("https://insta-post-6t1u.vercel.app/posts");
             const data = res.data.data || [];
             setPosts(data);
 
@@ -95,7 +96,8 @@ const Feed = () => {
         if (!currentLiked) {
             showToast('Added to your favorites!', 'success');
             try {
-                await axios.put(`http://localhost:3000/posts/${postId}/like`);
+                // await axios.put(`http://localhost:3000/posts/${postId}/like`);
+                await axios.put(`https://insta-post-6t1u.vercel.app/posts/${postId}/like`);
             } catch (error) {
                 console.error("Error liking post:", error);
             }
@@ -142,7 +144,8 @@ const Feed = () => {
     const handleDelete = async (postId) => {
         if (!window.confirm("Are you sure you want to delete this post?")) return;
         try {
-            await axios.delete(`http://localhost:3000/posts/${postId}`);
+            // await axios.delete(`http://localhost:3000/posts/${postId}`); localhost
+            await axios.delete(`https://insta-post-6t1u.vercel.app/posts/${postId}`);
             setPosts(posts.filter(p => p._id !== postId));
             showToast('Post deleted successfully', 'success');
             if (activeLightboxIndex !== null) {
