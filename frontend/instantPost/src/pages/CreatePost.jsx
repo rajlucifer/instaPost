@@ -20,7 +20,7 @@ const CreatePost = () => {
     const fetchLimitStatus = async () => {
         try {
             // const res = await axios.get("http://localhost:3000/posts/limit-status"); // this i made for the local host
-            const res = await axios.get("https://insta-post-6t1u.vercel.app/posts/limit-status")
+            const res = await axios.get("https://instapost-nb20.onrender.com/posts/limit-status")
             setLimitStatus(res.data);
         } catch (error) {
             console.error("Failed to fetch limit status:", error);
@@ -116,7 +116,7 @@ const CreatePost = () => {
 
         try {
             // await axios.post("http://localhost:3000/create-post", formData);  for localhost
-            await axios.post("https://insta-post-6t1u.vercel.app/create-post", formData);
+            await axios.post("https://instapost-nb20.onrender.com/create-post", formData);
             showToast('Post shared with the world!', 'success');
             setTimeout(() => navigate("/feed"), 1000);
         } catch (error) {
