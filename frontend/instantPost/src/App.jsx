@@ -7,7 +7,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-50 flex">
       <Sidebar />
-      <main className="flex-1 ml-20 lg:ml-64 min-h-screen">
+      <main className="flex-1 ml-0 md:ml-20 lg:ml-64 min-h-screen pt-16 md:pt-0">
         <Routes>
           <Route path="/" element={<CreatePost />} />
           <Route path="/feed" element={<Feed />} />
