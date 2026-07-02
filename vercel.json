@@ -1,4 +1,9 @@
 {
+  "version": 2,
+  "buildCommand": "cd frontend/instantPost && npm install && npm run build",
+  "outputDirectory": "frontend/instantPost/dist",
+  "installCommand": "cd frontend/instantPost && npm install",
+  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",
