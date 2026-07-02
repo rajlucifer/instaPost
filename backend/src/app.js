@@ -50,6 +50,22 @@ app.use(express.json());
 const upload = multer({
     storage:multer.memoryStorage()
 });
+
+// Health check / root route — required for Render to confirm the service is alive
+app.get("/", (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        message: "InstaPost API is running 🚀",
+        version: "1.0.0",
+        endpoints: {
+            posts: "GET /posts",
+            createPost: "POST /create-post",
+            likePost: "PUT /posts/:id/like",
+            deletePost: "DELETE /posts/:id",
+            limitStatus: "GET /posts/limit-status"
+        }
+    });
+});
 // to upload it we use the upload.single("key") like we use the image which same as the schema name we use
 app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
     try {
