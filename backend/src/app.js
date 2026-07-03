@@ -15,13 +15,14 @@ const cors = require("cors");
 
 const app = express();
 //using the middleware cors work properly with frontend and backend connection
+// Regex that matches any insta-post-* vercel preview/production URL
+const vercelPreviewRegex = /^https:\/\/insta-post(-[a-z0-9]+)*\.vercel\.app$/;
+
 const allowedOrigins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
-    "https://insta-post-6t1u.vercel.app",
-    "https://insta-post-mauve.vercel.app"
 ];
 
 if (process.env.FRONTEND_URL) {
@@ -33,7 +34,16 @@ if (process.env.ALLOWED_ORIGINS) {
 }
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. curl, mobile apps, Render health checks)
+        if (!origin) return callback(null, true);
+        // Allow any insta-post-*.vercel.app URL (covers all preview deployments)
+        if (vercelPreviewRegex.test(origin)) return callback(null, true);
+        // Allow explicitly listed origins
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        // Block everything else
+        callback(new Error(`CORS: origin '${origin}' not allowed`));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
