@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
-import { UploadCloud, X, Send, Sparkles, Image, Clock, AlertCircle } from 'lucide-react';
+import { UploadCloud, X, Send, Sparkles, Image, Clock, AlertCircle, Wand2 } from 'lucide-react';
 
 const CreatePost = () => {
     const navigate = useNavigate();
@@ -16,6 +16,59 @@ const CreatePost = () => {
     const [isDragOver, setIsDragOver] = useState(false);
     const [imageFile, setImageFile] = useState(null);
     const [limitStatus, setLimitStatus] = useState(null);
+    const [isMagicLoading, setIsMagicLoading] = useState(false);
+
+    const MAGIC_CAPTIONS = [
+        // Aesthetic / Life
+        "Chasing sunsets and good vibes only ✨",
+        "Living in the moments between the moments 🌙",
+        "Some days you just need a little magic ✨",
+        "Not all who wander are lost, but I might be 🗺️",
+        "Collecting memories, not things 💫",
+        "Bloom where you are planted 🌸",
+        "The vibe is immaculate and the energy is unmatched 🔥",
+        "Just a soul with too many dreams and too little time ⏳",
+        "Somewhere between reality and a daydream 🌊",
+        "Golden hour hits different when you're happy 🌅",
+        // Nature
+        "Nature always wears the colors of the spirit 🍃",
+        "Mountains are calling and I must go 🏔️",
+        "In every walk with nature, one receives far more than he seeks 🌿",
+        "The sky is not the limit, it's just the beginning 🌤️",
+        "Wild at heart, free in soul 🌊",
+        // Travel
+        "New place, same me — just slightly more caffeinated ☕",
+        "Wanderlust and city dust 🏙️",
+        "Every destination is a new chapter 📖",
+        "Adventures are the best way to learn 🌍",
+        "Far from home, close to my heart 💛",
+        // Food / Cozy
+        "Good food, good mood, zero regrets 🍜",
+        "Treat yourself — you deserve it 🧁",
+        "The secret ingredient is always love (and a little butter) 🧈",
+        "Cozy vibes and warm drinks make everything better ☕",
+        // Motivation
+        "Progress, not perfection 🚀",
+        "Small steps every day lead to big changes 💪",
+        "Be the energy you want to attract ⚡",
+        "Do more of what makes you feel alive 🌺",
+        "Your vibe is your brand — make it iconic 💎",
+        // Fun / Playful
+        "Not a regular post, a cool post 😎",
+        "Main character energy activated 🎬",
+        "If you're reading this, go drink some water 💧",
+        "Living rent-free in my own highlight reel 🎞️",
+    ];
+
+    const generateMagicCaption = () => {
+        if (isMagicLoading || isLimitReached) return;
+        setIsMagicLoading(true);
+        setTimeout(() => {
+            const randomCaption = MAGIC_CAPTIONS[Math.floor(Math.random() * MAGIC_CAPTIONS.length)];
+            setCaption(randomCaption);
+            setIsMagicLoading(false);
+        }, 500);
+    };
 
     const fetchLimitStatus = async () => {
         try {
@@ -317,10 +370,31 @@ const CreatePost = () => {
                             </div>
 
                             {/* Caption */}
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-                                    Caption
-                                </label>
+                             <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        Caption
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={generateMagicCaption}
+                                        disabled={isLimitReached || isMagicLoading}
+                                        title="Generate a random magic caption"
+                                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all duration-200 select-none ${
+                                            isLimitReached
+                                                ? 'text-slate-400 cursor-not-allowed opacity-50'
+                                                : 'text-white cursor-pointer hover:scale-105 active:scale-95 shadow-sm'
+                                        }`}
+                                        style={{ background: isLimitReached ? 'none' : 'var(--gradient)' }}
+                                    >
+                                        <Wand2
+                                            className={`h-3 w-3 transition-transform duration-500 ${
+                                                isMagicLoading ? 'animate-spin' : ''
+                                            }`}
+                                        />
+                                        {isMagicLoading ? 'Thinking...' : '✨ Magic Caption'}
+                                    </button>
+                                </div>
                                 <textarea
                                     value={caption}
                                     onChange={(e) => setCaption(e.target.value)}
