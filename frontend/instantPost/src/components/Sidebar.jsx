@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Camera, Grid, PlusCircle, Palette, Sun, Moon, ChevronLeft, ChevronRight, Settings, LogOut, Sparkles, Menu, X } from 'lucide-react';
+import {
+  Camera, Grid, PlusCircle, Palette, Sun, Moon,
+  ChevronLeft, ChevronRight, Settings, LogOut,
+  Sparkles, Menu, X, Zap
+} from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const Sidebar = () => {
   const location = useLocation();
-  const { theme, toggleTheme, colorTheme, setColorTheme, themes, currentTheme } = useTheme();
+  const { theme, toggleTheme, colorTheme, setColorTheme, themes } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -22,298 +26,362 @@ const Sidebar = () => {
   }, []);
 
   const navItems = [
-    { path: '/feed', label: 'Feed Gallery', icon: Grid },
-    { path: '/', label: 'Create Post', icon: PlusCircle },
+    { path: '/feed', label: 'Feed Gallery', icon: Grid, desc: 'Browse all posts' },
+    { path: '/', label: 'Create Post', icon: PlusCircle, desc: 'Share a moment' },
   ];
+
+  const sidebarW = collapsed ? 'w-[72px]' : 'w-[260px]';
 
   return (
     <>
-      {/* Mobile Top Header */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/30 dark:border-slate-800/40 flex items-center justify-between px-4 z-40 md:hidden">
-        <Link to="/feed" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl theme-gradient text-white shadow-[0_4px_12px_rgba(99,102,241,0.15)]">
-            <Camera className="h-4.5 w-4.5" />
+      {/* ── Mobile Top Bar ─────────────────────────────── */}
+      <div className="fixed top-0 left-0 right-0 h-14 md:hidden z-40 flex items-center justify-between px-4
+        bg-white/75 dark:bg-slate-950/75 backdrop-blur-xl
+        border-b border-white/30 dark:border-slate-800/40">
+        <Link to="/feed" className="flex items-center gap-2.5 group">
+          <div className="h-8 w-8 rounded-xl theme-gradient flex items-center justify-center shadow-md glow-sm
+            transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+            <Camera className="h-4 w-4 text-white" />
           </div>
-          <span className="font-extrabold text-md tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-            InstaPost
-          </span>
+          <span className="font-black text-base tracking-tight gradient-text">InstaPost</span>
         </Link>
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-300 transition-colors"
+          className="p-2 rounded-xl text-slate-500 dark:text-slate-400
+            hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Backdrop for mobile */}
+      {/* ── Mobile backdrop ───────────────────────────── */}
       {mobileOpen && (
-        <div 
-          className="fixed inset-0 z-45 bg-slate-950/40 backdrop-blur-sm md:hidden"
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      <aside className={`fixed left-0 top-0 z-50 h-screen transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] border-r 
-        border-slate-200/30 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/60 backdrop-blur-2xl
-        shadow-[0_8px_32px_0_rgba(15,23,42,0.04)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]
-        transform md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${collapsed ? 'w-20' : 'w-64'}`}
-      >
-        <div className="flex h-full flex-col justify-between">
-          <div>
-            {/* Logo + Collapse Button */}
-            <div className={`relative flex h-20 items-center px-4 border-b border-slate-200/30 dark:border-slate-800/40 
-              ${collapsed ? 'justify-center' : 'justify-between'}`}
-            >
-              {!collapsed ? (
-                <div className="flex w-full items-center justify-between">
-                  <Link to="/feed" className="flex items-center gap-3 group" onClick={() => setMobileOpen(false)}>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl theme-gradient text-white shadow-[0_4px_12px_rgba(99,102,241,0.3)] dark:shadow-[0_4px_12px_rgba(99,102,241,0.15)] transition-all duration-500 group-hover:scale-110 group-hover:rotate-6">
-                      <Camera className="h-5 w-5 animate-pulse-glow" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent group-hover:opacity-85 transition-opacity">
-                        InstaPost
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Beta Studio</span>
-                    </div>
-                  </Link>
-                  {/* Close Button on mobile */}
-                  <button
-                    onClick={() => setMobileOpen(false)}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 md:hidden transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
+      {/* ── Sidebar ───────────────────────────────────── */}
+      <aside className={`
+        fixed left-0 top-0 z-50 h-screen flex flex-col
+        transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+        sidebar
+        md:translate-x-0
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${sidebarW}
+      `}>
+
+        {/* ── Logo area ───────────────────────────────── */}
+        <div className={`relative flex items-center h-[72px] px-4 shrink-0
+          border-b border-white/20 dark:border-slate-800/40
+          ${collapsed ? 'justify-center' : 'justify-between'}`}>
+
+          {!collapsed ? (
+            <Link to="/feed" onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 group min-w-0">
+              <div className="relative shrink-0">
+                <div className="h-10 w-10 rounded-2xl theme-gradient flex items-center justify-center
+                  shadow-lg glow-sm transition-all duration-500
+                  group-hover:scale-110 group-hover:rotate-6">
+                  <Camera className="h-5 w-5 text-white" />
                 </div>
-              ) : (
-                <Link to="/feed" className="flex h-10 w-10 items-center justify-center rounded-xl theme-gradient text-white shadow-lg transition-transform duration-300 hover:scale-105" onClick={() => setMobileOpen(false)}>
-                  <Camera className="h-5 w-5" />
-                </Link>
-              )}
-
-              {/* Collapse Trigger Button */}
-              <button
-                onClick={() => setCollapsed(!collapsed)}
-                className={`absolute -right-3 top-7 h-6 w-6 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-md hidden md:flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all hover:scale-110`}
-              >
-                {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+                {/* Spinning ring */}
+                <div className="absolute inset-[-3px] rounded-[18px] border-2 border-dashed
+                  border-white/30 dark:border-slate-600/50 animate-spin-slow pointer-events-none" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-black text-[17px] tracking-tight leading-none gradient-text">InstaPost</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mt-0.5">
+                  Beta Studio
+                </p>
+              </div>
+              {/* Mobile close */}
+              <button onClick={(e) => { e.preventDefault(); setMobileOpen(false); }}
+                className="ml-auto p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white
+                  hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden transition-all">
+                <X className="h-4 w-4" />
               </button>
-            </div>
+            </Link>
+          ) : (
+            <Link to="/feed" onClick={() => setMobileOpen(false)}
+              className="h-10 w-10 rounded-2xl theme-gradient flex items-center justify-center
+                shadow-lg glow-sm transition-all duration-300 hover:scale-110 hover:rotate-6">
+              <Camera className="h-5 w-5 text-white" />
+            </Link>
+          )}
 
-            {/* Navigation Items */}
-            <nav className="py-6 px-4">
-              <ul className="space-y-1.5">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <li key={item.path} className="group relative">
-                      <Link
-                        to={item.path}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 
-                          ${collapsed ? 'justify-center' : ''}
-                          ${isActive 
-                            ? 'theme-bg-light theme-text shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-slate-100/50 dark:border-slate-800/30' 
-                            : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100/40 dark:hover:bg-slate-900/40'
-                          }`}
-                      >
-                        <Icon className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'theme-text' : ''}`} />
-                        {!collapsed && <span>{item.label}</span>}
-                      </Link>
+          {/* Collapse toggle (desktop) */}
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="absolute -right-3.5 top-1/2 -translate-y-1/2
+              h-7 w-7 rounded-full hidden md:flex items-center justify-center
+              bg-white dark:bg-slate-900
+              border border-slate-200 dark:border-slate-700
+              shadow-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-100
+              transition-all hover:scale-110 hover:shadow-lg z-10"
+          >
+            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+          </button>
+        </div>
 
-                      {/* Tooltip for collapsed mode */}
-                      {collapsed && (
-                        <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-lg bg-slate-900/90 dark:bg-white/90 backdrop-blur-md text-white dark:text-slate-900 text-xs font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 border border-slate-800/10 dark:border-slate-200/10">
-                          {item.label}
-                        </div>
+        {/* ── Navigation ──────────────────────────────── */}
+        <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-1.5">
+          {/* Label */}
+          {!collapsed && (
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-600 px-3 mb-3">
+              Navigation
+            </p>
+          )}
+
+          {navItems.map(({ path, label, icon: Icon, desc }) => {
+            const isActive = location.pathname === path;
+            return (
+              <li key={path} className="group relative list-none">
+                <Link
+                  to={path}
+                  onClick={() => setMobileOpen(false)}
+                  className={`
+                    relative flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold
+                    transition-all duration-300 overflow-hidden
+                    ${collapsed ? 'justify-center' : ''}
+                    ${isActive
+                      ? 'text-white shadow-lg glow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
+                    }
+                  `}
+                  style={isActive ? { background: 'var(--gradient)' } : {}}
+                >
+                  {/* Active shimmer */}
+                  {isActive && (
+                    <span className="absolute inset-0 bg-white/10 animate-shimmer pointer-events-none" />
+                  )}
+                  <Icon className={`h-5 w-5 shrink-0 transition-all duration-300
+                    ${isActive ? 'text-white' : ''}
+                    group-hover:scale-110`} />
+                  {!collapsed && (
+                    <div className="min-w-0">
+                      <p className="leading-none">{label}</p>
+                      {!isActive && (
+                        <p className="text-[10px] font-normal text-slate-400 dark:text-slate-500 mt-0.5 leading-none">{desc}</p>
                       )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          </div>
+                    </div>
+                  )}
+                  {/* Active dot */}
+                  {isActive && !collapsed && (
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/80 shrink-0" />
+                  )}
+                </Link>
 
-          {/* Footer / Theme & Profile */}
-          <div className="p-4 border-t border-slate-200/30 dark:border-slate-800/40 bg-slate-50/20 dark:bg-slate-950/20" ref={themeRef}>
-            {/* Theme Palette Container */}
-            <div className="mb-4">
-              {!collapsed ? (
-                <div className="bg-white/40 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200/20 dark:border-slate-800/20">
-                  <div className="flex items-center gap-1.5 mb-2 px-0.5">
-                    <Palette className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Color Palette</span>
+                {/* Tooltip (collapsed) */}
+                {collapsed && (
+                  <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-50 pointer-events-none
+                    opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0">
+                    <div className="px-3 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900
+                      text-xs font-bold shadow-xl border border-slate-800/20 dark:border-slate-200/20 whitespace-nowrap">
+                      {label}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-5 gap-1.5">
+                )}
+              </li>
+            );
+          })}
+
+          {/* Divider */}
+          <div className="my-4 border-t border-slate-200/40 dark:border-slate-800/40" />
+
+          {/* Quick create shortcut */}
+          {!collapsed && (
+            <div className="mx-1 p-3.5 rounded-2xl bg-gradient-to-br from-white/40 to-white/10
+              dark:from-slate-800/40 dark:to-slate-900/20
+              border border-white/30 dark:border-slate-700/30 animate-slide-up delay-300">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="h-3.5 w-3.5 text-amber-400" />
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Quick Tip</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Use the <span className="font-bold text-slate-700 dark:text-slate-300">✨ Magic Caption</span> button for instant inspiration!
+              </p>
+            </div>
+          )}
+        </nav>
+
+        {/* ── Footer ──────────────────────────────────── */}
+        <div className="shrink-0 border-t border-white/20 dark:border-slate-800/40 p-3 space-y-2.5" ref={themeRef}>
+
+          {/* Color palette */}
+          {!collapsed ? (
+            <div className="p-3 rounded-2xl bg-white/40 dark:bg-slate-900/40
+              border border-white/30 dark:border-slate-800/30">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Palette className="h-3 w-3 text-slate-400" />
+                <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">
+                  Color Theme
+                </span>
+              </div>
+              <div className="grid grid-cols-7 gap-1.5">
+                {Object.entries(themes).map(([key, t]) => (
+                  <button
+                    key={key}
+                    onClick={() => setColorTheme(key)}
+                    title={t.name}
+                    className={`relative h-5 rounded-full transition-all duration-300 hover:scale-125
+                      ${colorTheme === key ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 scale-110' : 'opacity-60 hover:opacity-100'}`}
+                    style={{
+                      background: t.vars['--gradient'],
+                      '--tw-ring-color': t.vars['--primary'],
+                    }}
+                  >
+                    {colorTheme === key && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <Sparkles className="h-2 w-2 text-white" />
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="relative group flex justify-center">
+              <button
+                onClick={() => setThemeOpen(t => !t)}
+                className="h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-300
+                  text-slate-400 hover:text-slate-700 dark:hover:text-white
+                  bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800
+                  border border-white/30 dark:border-slate-700/30"
+              >
+                <Palette className="h-4 w-4" />
+              </button>
+              {themeOpen && (
+                <div className="absolute bottom-14 left-16 z-50 animate-scale-in
+                  p-3 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
+                  shadow-2xl border border-slate-200/50 dark:border-slate-700/50 w-44">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2">Theme</p>
+                  <div className="grid grid-cols-4 gap-1.5">
                     {Object.entries(themes).map(([key, t]) => (
                       <button
                         key={key}
-                        onClick={() => setColorTheme(key)}
-                        className={`h-6 rounded-lg transition-all duration-300 hover:scale-110 relative overflow-hidden group
-                          ${colorTheme === key ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950' : 'opacity-70 hover:opacity-100'}`}
-                        style={{ 
-                          background: t.vars['--gradient'],
-                          ringColor: t.vars['--primary'],
-                          '--tw-ring-color': t.vars['--primary']
-                        }}
+                        onClick={() => { setColorTheme(key); setThemeOpen(false); }}
                         title={t.name}
-                      >
-                        {colorTheme === key && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                            <Sparkles className="h-2.5 w-2.5 text-white" />
-                          </div>
-                        )}
-                      </button>
+                        className={`h-7 rounded-xl transition-all duration-200 hover:scale-110
+                          ${colorTheme === key ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' : 'opacity-60 hover:opacity-100'}`}
+                        style={{ background: t.vars['--gradient'], '--tw-ring-color': t.vars['--primary'] }}
+                      />
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="relative group flex justify-center">
-                  <button
-                    onClick={() => setThemeOpen(!themeOpen)}
-                    className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-300 border border-slate-200/20 dark:border-slate-800/20
-                      ${themeOpen ? 'bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white' : 'text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-900/40'}`}
-                  >
-                    <Palette className="h-4.5 w-4.5" />
-                  </button>
-
-                  {themeOpen && (
-                    <div className="absolute bottom-12 left-14 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/40 dark:border-slate-800/40 p-2.5 z-50 animate-fade-in w-44">
-                      <div className="flex items-center gap-1.5 mb-2 px-1">
-                        <Palette className="h-3 w-3 text-slate-400" />
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Themes</span>
-                      </div>
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {Object.entries(themes).map(([key, t]) => (
-                          <button
-                            key={key}
-                            onClick={() => { setColorTheme(key); setThemeOpen(false); }}
-                            className={`h-7 rounded-lg transition-all relative
-                              ${colorTheme === key ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' : 'opacity-70 hover:opacity-100'}`}
-                            style={{ 
-                              background: t.vars['--gradient'],
-                              ringColor: t.vars['--primary'],
-                              '--tw-ring-color': t.vars['--primary']
-                            }}
-                            title={t.name}
-                          >
-                            {colorTheme === key && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                                <Sparkles className="h-2.5 w-2.5 text-white" />
-                              </div>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {!themeOpen && (
-                    <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-lg bg-slate-900/90 dark:bg-white/90 backdrop-blur-md text-white dark:text-slate-900 text-xs font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 border border-slate-800/10 dark:border-slate-200/10">
-                      Choose Palette
-                    </div>
-                  )}
-                </div>
               )}
             </div>
+          )}
 
-            {/* Dark / Light Toggle */}
-            <div className="mb-4">
-              {!collapsed ? (
-                <button
-                  onClick={toggleTheme}
-                  className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-slate-200/20 dark:border-slate-800/20 bg-slate-100/50 hover:bg-slate-100 dark:bg-slate-900/40 dark:hover:bg-slate-900/70 transition-all duration-300 group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative w-5 h-5 flex items-center justify-center">
-                      {theme === 'dark' ? (
-                        <Sun className="h-4 w-4 text-amber-500 transition-transform duration-500 rotate-0 hover:rotate-90" />
-                      ) : (
-                        <Moon className="h-4 w-4 text-slate-500 dark:text-slate-400 transition-transform duration-500 rotate-0 hover:rotate-12" />
-                      )}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                    </span>
-                  </div>
-                  <div className={`w-8 h-4.5 rounded-full p-0.5 transition-colors duration-300 ${theme === 'dark' ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-800'}`}>
-                    <div className={`w-3.5 h-3.5 rounded-full bg-white transition-transform duration-300 ${theme === 'dark' ? 'translate-x-3.5' : 'translate-x-0'}`} />
-                  </div>
-                </button>
-              ) : (
-                <div className="relative group flex justify-center">
-                  <button
-                    onClick={toggleTheme}
-                    className="h-10 w-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100/50 dark:hover:bg-slate-900/40 transition-all duration-300 border border-slate-200/10 dark:border-slate-800/10"
-                  >
-                    {theme === 'dark' ? (
-                      <Sun className="h-4.5 w-4.5 text-amber-500 transition-all duration-500 hover:rotate-90" />
-                    ) : (
-                      <Moon className="h-4.5 w-4.5 transition-all duration-500 hover:rotate-12" />
-                    )}
-                  </button>
-
-                  <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-lg bg-slate-900/90 dark:bg-white/90 backdrop-blur-md text-white dark:text-slate-900 text-xs font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 border border-slate-800/10 dark:border-slate-200/10">
-                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                  </div>
+          {/* Dark / light toggle */}
+          {!collapsed ? (
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl
+                bg-white/40 dark:bg-slate-900/40 hover:bg-white/70 dark:hover:bg-slate-800/70
+                border border-white/30 dark:border-slate-800/30
+                transition-all duration-300 group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className={`h-7 w-7 rounded-xl flex items-center justify-center transition-all duration-500
+                  ${theme === 'dark' ? 'bg-amber-400/20 rotate-0' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                  {theme === 'dark'
+                    ? <Sun className="h-3.5 w-3.5 text-amber-400" />
+                    : <Moon className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />}
                 </div>
-              )}
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </span>
+              </div>
+              {/* Toggle pill */}
+              <div className={`relative h-5 w-9 rounded-full transition-all duration-300
+                ${theme === 'dark' ? 'bg-amber-400' : 'bg-slate-300 dark:bg-slate-700'}`}>
+                <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-300
+                  ${theme === 'dark' ? 'left-4' : 'left-0.5'}`} />
+              </div>
+            </button>
+          ) : (
+            <div className="relative group flex justify-center">
+              <button
+                onClick={toggleTheme}
+                className="h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-300
+                  text-slate-400 hover:text-slate-700 dark:hover:text-white
+                  bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800
+                  border border-white/30 dark:border-slate-700/30"
+              >
+                {theme === 'dark'
+                  ? <Sun className="h-4 w-4 text-amber-400" />
+                  : <Moon className="h-4 w-4" />}
+              </button>
+              <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-50
+                opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200">
+                <div className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-white
+                  text-white dark:text-slate-900 text-xs font-bold shadow-xl whitespace-nowrap">
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* User Profile Widget */}
-            <div className="pt-4 border-t border-slate-200/30 dark:border-slate-800/40">
-              {!collapsed ? (
-                <div className="flex items-center justify-between p-2 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-slate-200/10 dark:border-slate-800/10 group">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="relative">
-                      <div className="h-9 w-9 rounded-xl theme-gradient p-0.5 shadow-md">
-                        <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center text-white text-xs font-black tracking-wider uppercase">
-                          AM
-                        </div>
-                      </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-950" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Alex Mercer</span>
-                      <span className="text-[10px] text-slate-400 font-semibold truncate">@alexmercer</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-0.5">
-                    <button className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Settings" onClick={() => setMobileOpen(false)}>
-                      <Settings className="h-3.5 w-3.5" />
-                    </button>
-                    <button className="p-1 rounded-lg text-slate-400 hover:text-rose-500 transition-colors" title="Logout" onClick={() => setMobileOpen(false)}>
-                      <LogOut className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative group flex justify-center">
-                  <div className="relative cursor-pointer transition-transform duration-300 hover:scale-105">
-                    <div className="h-10 w-10 rounded-xl theme-gradient p-0.5 shadow-md">
-                      <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center text-white text-xs font-black uppercase">
+          {/* User profile */}
+          <div className="pt-2 border-t border-white/20 dark:border-slate-800/40">
+            {!collapsed ? (
+              <div className="flex items-center justify-between p-2.5 rounded-2xl
+                bg-white/40 dark:bg-slate-900/40
+                border border-white/20 dark:border-slate-800/20
+                hover:bg-white/60 dark:hover:bg-slate-800/50 transition-all duration-200 group cursor-pointer">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="relative shrink-0">
+                    <div className="h-9 w-9 rounded-xl theme-gradient p-0.5 shadow-md glow-sm">
+                      <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center
+                        text-white text-[10px] font-black tracking-wide uppercase">
                         AM
                       </div>
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-950" />
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full
+                      bg-emerald-400 border-2 border-white dark:border-slate-900" />
                   </div>
-
-                  <div className="absolute left-full ml-4 bottom-0 p-3 rounded-2xl bg-slate-900/95 dark:bg-white/95 backdrop-blur-md text-white dark:text-slate-950 text-xs font-bold shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50 border border-slate-800/10 dark:border-slate-200/10 flex flex-col gap-1.5 min-w-36">
-                    <div className="pb-1 border-b border-white/10 dark:border-slate-900/10">
-                      <p className="font-bold text-white dark:text-slate-950">Alex Mercer</p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">@alexmercer</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate leading-none">Alex Mercer</p>
+                    <p className="text-[10px] text-slate-400 truncate mt-0.5">@alexmercer</p>
+                  </div>
+                </div>
+                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors" title="Settings">
+                    <Settings className="h-3.5 w-3.5" />
+                  </button>
+                  <button className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 transition-colors" title="Logout">
+                    <LogOut className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="relative group flex justify-center">
+                <div className="relative cursor-pointer transition-all duration-300 hover:scale-105">
+                  <div className="h-10 w-10 rounded-2xl theme-gradient p-0.5 shadow-md glow-sm">
+                    <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center
+                      text-white text-[10px] font-black uppercase">
+                      AM
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-300 dark:text-slate-600">
-                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      <span>Active Now</span>
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full
+                    bg-emerald-400 border-2 border-white dark:border-slate-900" />
+                </div>
+                <div className="absolute left-full ml-4 bottom-0 z-50
+                  opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200">
+                  <div className="p-3 rounded-2xl bg-slate-900/95 dark:bg-white/95 backdrop-blur
+                    text-xs shadow-2xl border border-slate-800/10 dark:border-slate-200/10 min-w-36">
+                    <p className="font-bold text-white dark:text-slate-900">Alex Mercer</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">@alexmercer</p>
+                    <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-300 dark:text-slate-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      Active Now
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </aside>
