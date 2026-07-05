@@ -3,9 +3,10 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import ImageEditorModal from '../components/ImageEditorModal';
 import {
   UploadCloud, X, Send, Sparkles, Clock,
-  AlertCircle, Wand2, Image as ImageIcon, Tag, Type, Layers
+  AlertCircle, Wand2, Image as ImageIcon, Tag, Type, Layers, SlidersHorizontal
 } from 'lucide-react';
 
 const MAGIC_CAPTIONS = [
@@ -62,6 +63,8 @@ const CreatePost = () => {
   const [imageFile, setImageFile] = useState(null);
   const [limitStatus, setLimitStatus] = useState(null);
   const [isMagicLoading, setIsMagicLoading] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [rawImageSrc, setRawImageSrc] = useState(null); // original src for re-editing
 
   const generateMagicCaption = () => {
     if (isMagicLoading || isLimitReached) return;
@@ -95,17 +98,34 @@ const CreatePost = () => {
   const handleFile = (file) => {
     if (!file.type.startsWith('image/')) { showToast('Please select a valid image file', 'error'); return; }
     if (file.size > 5 * 1024 * 1024) { showToast('Image size must be less than 5MB', 'error'); return; }
-    setImageFile(file);
     const reader = new FileReader();
-    reader.onloadend = () => setPreview(reader.result);
+    reader.onloadend = () => {
+      setRawImageSrc(reader.result);
+      setImageFile(file);
+      setPreview(reader.result);
+      setShowEditor(true);
+    };
     reader.readAsDataURL(file);
+  };
+
+  const handleEditorApply = (editedFile, editedPreviewUrl) => {
+    setImageFile(editedFile);
+    setPreview(editedPreviewUrl);
+    setShowEditor(false);
+    showToast('Photo edited successfully!', 'success');
+  };
+
+  const removeSelectedImage = () => {
+    setPreview(null);
+    setImageFile(null);
+    setRawImageSrc(null);
   };
 
   const handleImageChange = (e) => { const f = e.target.files[0]; if (f) handleFile(f); };
   const handleDragOver  = (e) => { e.preventDefault(); setIsDragOver(true); };
   const handleDragLeave = ()  => setIsDragOver(false);
   const handleDrop      = (e) => { e.preventDefault(); setIsDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); };
-  const removeSelectedImage = () => { setPreview(null); setImageFile(null); };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -226,8 +246,17 @@ const CreatePost = () => {
             <div className="relative rounded-3xl overflow-hidden shadow-2xl group border border-white/20 dark:border-slate-700/40">
               <img src={preview} alt="Preview" className="w-full h-72 lg:h-[420px] object-cover" />
               {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent
-                opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-5">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent
+                opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-5 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditor(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-white rounded-xl font-semibold text-sm
+                    transition-all shadow-lg translate-y-2 group-hover:translate-y-0"
+                  style={{ background: 'var(--gradient)' }}
+                >
+                  <SlidersHorizontal className="h-4 w-4" /> Edit Photo
+                </button>
                 <button
                   type="button"
                   onClick={removeSelectedImage}
@@ -235,14 +264,14 @@ const CreatePost = () => {
                     text-white rounded-xl font-semibold text-sm transition-all shadow-lg
                     translate-y-2 group-hover:translate-y-0"
                 >
-                  <X className="h-4 w-4" /> Remove Photo
+                  <X className="h-4 w-4" /> Remove
                 </button>
               </div>
               {/* Corner badge */}
               <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur
                 text-white text-[10px] font-bold border border-white/10">
                 <ImageIcon className="inline h-3 w-3 mr-1" />
-                Ready
+                Ready to post
               </div>
             </div>
           )}
@@ -470,6 +499,15 @@ const CreatePost = () => {
           )}
         </div>
       </div>
+
+      {/* ── Image Editor Modal ────────────────────── */}
+      {showEditor && rawImageSrc && (
+        <ImageEditorModal
+          imageSrc={rawImageSrc}
+          onApply={handleEditorApply}
+          onClose={() => setShowEditor(false)}
+        />
+      )}
     </div>
   );
 };
