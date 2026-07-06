@@ -19,6 +19,8 @@ const Feed = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [selectedTag, setSelectedTag] = useState(null);
   const [activeLightboxIndex, setActiveLightboxIndex] = useState(null);
+  const [doubleTapPost, setDoubleTapPost] = useState(null); // { id, x, y }
+  const clickTimerRef = React.useRef(null);
 
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -62,6 +64,33 @@ const Feed = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleDoubleTap = (e, postId) => {
+    e.stopPropagation();
+    // Cancel any pending single-click (lightbox) action
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setDoubleTapPost({ id: postId, x, y });
+    // Auto-clear after animation finishes
+    setTimeout(() => setDoubleTapPost(null), 800);
+    // Trigger like only if not already liked
+    if (!likedPosts[postId]) {
+      toggleLike(postId);
+    }
+  };
+
+  const handleImageClick = (postId) => {
+    // Delay single-click so double-click can cancel it
+    clickTimerRef.current = setTimeout(() => {
+      clickTimerRef.current = null;
+      openLightbox(postId);
+    }, 250);
+  };
 
   const toggleLike = async (postId) => {
     const was = !!likedPosts[postId];
@@ -304,7 +333,8 @@ const Feed = () => {
               {/* Image */}
               <div
                 className="relative overflow-hidden bg-slate-100 dark:bg-slate-950"
-                onClick={() => openLightbox(post._id)}
+                onClick={() => handleImageClick(post._id)}
+                onDoubleClick={(e) => handleDoubleTap(e, post._id)}
               >
                 <img
                   className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -313,6 +343,17 @@ const Feed = () => {
                   loading="lazy"
                   style={{ aspectRatio: index % 3 === 1 ? '4/5' : '4/3' }}
                 />
+
+                {/* Double-tap heart burst overlay */}
+                {doubleTapPost?.id === post._id && (
+                  <span
+                    key={doubleTapPost.id + doubleTapPost.x}
+                    className="absolute pointer-events-none text-5xl animate-heart-burst select-none z-20"
+                    style={{ left: doubleTapPost.x, top: doubleTapPost.y }}
+                  >
+                    ❤️
+                  </span>
+                )}
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent
                   opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
