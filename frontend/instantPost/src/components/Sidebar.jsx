@@ -141,7 +141,7 @@ const Sidebar = () => {
             </p>
           )}
 
-          {navItems.map(({ path, label, icon: Icon, desc }) => {
+          {navItems.map(({ path, label, icon: Icon, desc, live }) => {
             const isActive = location.pathname === path;
             return (
               <li key={path} className="group relative list-none">
@@ -179,7 +179,7 @@ const Sidebar = () => {
                     <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/80 shrink-0" />
                   )}
                   {/* Live badge */}
-                  {item.live && !isActive && !collapsed && (
+                  {live && !isActive && !collapsed && (
                     <span className="ml-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <span className="text-[9px] font-black uppercase tracking-wider text-emerald-500">Live</span>
