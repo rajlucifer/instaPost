@@ -127,6 +127,42 @@ const themes = {
       '--gradient-hover': 'linear-gradient(135deg, #475569, #52525b, #57534e)',
     },
   },
+  neon: {
+    name: 'Neon',
+    vars: {
+      '--primary': '#22d3ee',
+      '--primary-50': '#ecfeff',
+      '--primary-100': '#cffafe',
+      '--primary-200': '#a5f3fc',
+      '--primary-300': '#67e8f9',
+      '--primary-400': '#22d3ee',
+      '--primary-500': '#06b6d4',
+      '--primary-600': '#0891b2',
+      '--primary-700': '#0e7490',
+      '--primary-800': '#155e75',
+      '--primary-900': '#164e63',
+      '--gradient': 'linear-gradient(135deg, #22d3ee, #a3e635, #4ade80)',
+      '--gradient-hover': 'linear-gradient(135deg, #06b6d4, #84cc16, #22c55e)',
+    },
+  },
+  coral: {
+    name: 'Coral',
+    vars: {
+      '--primary': '#fb923c',
+      '--primary-50': '#fff7ed',
+      '--primary-100': '#ffedd5',
+      '--primary-200': '#fed7aa',
+      '--primary-300': '#fdba74',
+      '--primary-400': '#fb923c',
+      '--primary-500': '#f97316',
+      '--primary-600': '#ea580c',
+      '--primary-700': '#c2410c',
+      '--primary-800': '#9a3412',
+      '--primary-900': '#7c2d12',
+      '--gradient': 'linear-gradient(135deg, #fb923c, #f43f5e, #e879f9)',
+      '--gradient-hover': 'linear-gradient(135deg, #f97316, #e11d48, #d946ef)',
+    },
+  },
 };
 
 const ThemeContext = createContext();

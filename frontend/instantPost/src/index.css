@@ -77,6 +77,24 @@
   100% { transform: translate(-50%, -140%) scale(0.8); opacity: 0; }
 }
 
+@keyframes slide-in {
+  from { transform: translateX(100%) scale(0.9); opacity: 0; }
+  to   { transform: translateX(0)    scale(1);   opacity: 1; }
+}
+
+@keyframes bounce-in {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.1); opacity: 1; }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%  { transform: rotate(-8deg); }
+  75%  { transform: rotate(8deg); }
+}
+
 /* ─── Animation classes ─────────────────────────────── */
 .animate-float          { animation: float 7s ease-in-out infinite; }
 .animate-slide-up       { animation: slide-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -89,6 +107,9 @@
 .animate-spin-slow      { animation: spin-slow 8s linear infinite; }
 .animate-blob           { animation: blob 8s ease-in-out infinite; }
 .animate-heart-burst    { animation: heart-burst 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-slide-in       { animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-bounce-in      { animation: bounce-in 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards; }
+.animate-wiggle         { animation: wiggle 0.4s ease-in-out; }
 
 /* Staggered slide-up delays */
 .delay-100 { animation-delay: 100ms; }

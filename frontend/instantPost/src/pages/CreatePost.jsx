@@ -424,6 +424,7 @@ const CreatePost = () => {
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder={isLimitReached ? "Upload limits exceeded." : "Write something captivating..."}
                   rows={3}
+                  maxLength={300}
                   disabled={isLimitReached}
                   className={`w-full px-4 py-3 rounded-2xl text-sm transition-all duration-200 resize-none
                     border focus:outline-none
@@ -436,8 +437,26 @@ const CreatePost = () => {
                   onFocus={(e) => { if (!isLimitReached) e.target.style.borderColor = 'var(--primary)'; }}
                   onBlur={(e) => { e.target.style.borderColor = ''; }}
                 />
-                <div className="flex justify-end mt-1">
-                  <span className="text-[10px] text-slate-400">{caption.length} chars</span>
+                <div className="flex items-center justify-between mt-1.5">
+                  {/* Progress bar */}
+                  <div className="flex-1 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mr-3">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min((caption.length / 300) * 100, 100)}%`,
+                        background: caption.length > 270
+                          ? 'linear-gradient(to right, #ef4444, #dc2626)'
+                          : caption.length > 200
+                          ? 'linear-gradient(to right, #f59e0b, #ef4444)'
+                          : 'var(--gradient)'
+                      }}
+                    />
+                  </div>
+                  <span className={`text-[10px] font-bold transition-colors ${
+                    caption.length > 270 ? 'text-red-500' :
+                    caption.length > 200 ? 'text-amber-500' :
+                    'text-slate-400'
+                  }`}>{caption.length} / 300</span>
                 </div>
               </div>
 

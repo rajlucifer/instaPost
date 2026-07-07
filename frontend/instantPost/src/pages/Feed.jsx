@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import {
   Search, Heart, Share2, Download, Copy, LayoutGrid,
   AlertCircle, PlusCircle, X, ChevronLeft, ChevronRight,
-  SlidersHorizontal, Sparkles, Trash2, Clock, ImageOff
+  SlidersHorizontal, Sparkles, Trash2, Clock, ImageOff, ArrowUp, Flame
 } from 'lucide-react';
 
 const Feed = () => {
@@ -20,6 +20,7 @@ const Feed = () => {
   const [selectedTag, setSelectedTag] = useState(null);
   const [activeLightboxIndex, setActiveLightboxIndex] = useState(null);
   const [doubleTapPost, setDoubleTapPost] = useState(null); // { id, x, y }
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const clickTimerRef = React.useRef(null);
 
   const navigate = useNavigate();
@@ -64,6 +65,28 @@ const Feed = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Scroll-to-top visibility
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Sync trending tags to localStorage for Sidebar
+  useEffect(() => {
+    if (posts.length === 0) return;
+    const tagCount = {};
+    posts.forEach(p => p.tags?.forEach(t => {
+      const k = t.toLowerCase();
+      tagCount[k] = (tagCount[k] || 0) + 1;
+    }));
+    const sorted = Object.entries(tagCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([tag]) => tag);
+    localStorage.setItem('trendingTags', JSON.stringify(sorted));
+  }, [posts]);
 
   const handleDoubleTap = (e, postId) => {
     e.stopPropagation();
@@ -178,6 +201,21 @@ const Feed = () => {
   return (
     <div className="min-h-screen px-5 sm:px-8 py-8 transition-colors duration-300">
 
+      {/* ── Scroll to top button ───────────────────────── */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40
+            flex items-center gap-2 px-4 py-2.5 rounded-full text-white text-xs font-bold
+            shadow-2xl border border-white/20 backdrop-blur-md
+            transition-all duration-300 hover:scale-110 active:scale-95 animate-slide-up"
+          style={{ background: 'var(--gradient)' }}
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+          Back to top
+        </button>
+      )}
+
       {/* ── Header ────────────────────────────────────── */}
       <div className="mb-8 animate-slide-up">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -218,6 +256,30 @@ const Feed = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Stats Bar ─────────────────────────────────── */}
+      {!loading && posts.length > 0 && (
+        <div className="flex items-center gap-3 mb-6 flex-wrap animate-slide-up delay-100">
+          {[
+            { label: 'Total Posts', value: posts.length, icon: LayoutGrid },
+            { label: 'Total Likes', value: Object.values(likeCounts).reduce((a, b) => a + b, 0), icon: Heart },
+            { label: 'Unique Tags', value: allTags.length, icon: Flame },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl
+              glass-card border border-white/40 dark:border-slate-700/40"
+            >
+              <div className="h-7 w-7 rounded-xl flex items-center justify-center"
+                style={{ background: 'var(--gradient)' }}>
+                <Icon className="h-3.5 w-3.5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-900 dark:text-white leading-none">{value}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">{label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Search + Filters ──────────────────────────── */}
       <div className="glass-card rounded-3xl p-4 mb-8 animate-slide-up delay-100 border border-white/40 dark:border-slate-700/40">

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Camera, Grid, PlusCircle, Palette, Sun, Moon,
   ChevronLeft, ChevronRight, Settings, LogOut,
-  Sparkles, Menu, X, Zap
+  Sparkles, Menu, X, Zap, TrendingUp, Hash
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -26,9 +26,16 @@ const Sidebar = () => {
   }, []);
 
   const navItems = [
-    { path: '/feed', label: 'Feed Gallery', icon: Grid, desc: 'Browse all posts' },
+    { path: '/feed', label: 'Feed Gallery', icon: Grid, desc: 'Browse all posts', live: true },
     { path: '/', label: 'Create Post', icon: PlusCircle, desc: 'Share a moment' },
   ];
+
+  // Fetch trending tags from localStorage (set by Feed page)
+  const trendingTags = React.useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('trendingTags') || '[]').slice(0, 5);
+    } catch { return []; }
+  }, []);
 
   const sidebarW = collapsed ? 'w-[72px]' : 'w-[260px]';
 
@@ -171,6 +178,13 @@ const Sidebar = () => {
                   {isActive && !collapsed && (
                     <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/80 shrink-0" />
                   )}
+                  {/* Live badge */}
+                  {item.live && !isActive && !collapsed && (
+                    <span className="ml-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[9px] font-black uppercase tracking-wider text-emerald-500">Live</span>
+                    </span>
+                  )}
                 </Link>
 
                 {/* Tooltip (collapsed) */}
@@ -189,6 +203,36 @@ const Sidebar = () => {
 
           {/* Divider */}
           <div className="my-4 border-t border-slate-200/40 dark:border-slate-800/40" />
+
+          {/* Trending tags */}
+          {!collapsed && trendingTags.length > 0 && (
+            <div className="mx-1 p-3.5 rounded-2xl bg-gradient-to-br from-white/40 to-white/10
+              dark:from-slate-800/40 dark:to-slate-900/20
+              border border-white/30 dark:border-slate-700/30 animate-slide-up delay-200">
+              <div className="flex items-center gap-2 mb-2.5">
+                <TrendingUp className="h-3.5 w-3.5" style={{ color: 'var(--primary)' }} />
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Trending</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {trendingTags.map(tag => (
+                  <Link
+                    key={tag}
+                    to="/feed"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-0.5 px-2 py-1 rounded-full text-[10px] font-bold
+                      bg-white/50 dark:bg-slate-800/50 border border-white/30 dark:border-slate-700/30
+                      text-slate-600 dark:text-slate-300 hover:text-white transition-all duration-200
+                      hover:scale-105"
+                    style={{ '--hover-bg': 'var(--gradient)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--gradient)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                  >
+                    <Hash className="h-2.5 w-2.5" />{tag}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Quick create shortcut */}
           {!collapsed && (
@@ -219,7 +263,7 @@ const Sidebar = () => {
                   Color Theme
                 </span>
               </div>
-              <div className="grid grid-cols-7 gap-1.5">
+              <div className="grid grid-cols-5 gap-1.5">
                 {Object.entries(themes).map(([key, t]) => (
                   <button
                     key={key}
@@ -255,9 +299,9 @@ const Sidebar = () => {
               {themeOpen && (
                 <div className="absolute bottom-14 left-16 z-50 animate-scale-in
                   p-3 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
-                  shadow-2xl border border-slate-200/50 dark:border-slate-700/50 w-44">
+                  shadow-2xl border border-slate-200/50 dark:border-slate-700/50 w-52">
                   <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2">Theme</p>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-3 gap-1.5">
                     {Object.entries(themes).map(([key, t]) => (
                       <button
                         key={key}
