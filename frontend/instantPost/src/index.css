@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    overflow-x: hidden; /* prevent horizontal scroll from sidebar slide transitions */
+    max-width: 100%;
+  }
   body {
     transition: background-color 0.4s ease, color 0.4s ease;
   }
@@ -175,6 +179,27 @@
 }
 .sidebar.collapsed {
   width: var(--sidebar-collapsed-w);
+}
+
+/* On mobile, sidebar should be full-width when open (max 280px) */
+@media (max-width: 767px) {
+  .sidebar {
+    width: min(280px, 85vw) !important;
+  }
+}
+
+/* Main content margin driven by sidebar state (desktop only) */
+@media (min-width: 768px) {
+  [data-sidebar="expanded"] main {
+    margin-left: var(--sidebar-w);
+  }
+  [data-sidebar="collapsed"] main {
+    margin-left: var(--sidebar-collapsed-w);
+  }
+  /* Fallback when attribute not yet set */
+  :not([data-sidebar]) main {
+    margin-left: var(--sidebar-w);
+  }
 }
 
 /* ─── Theme helpers ─────────────────────────────────── */

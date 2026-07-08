@@ -15,6 +15,19 @@ const Sidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const themeRef = useRef(null);
 
+  // Sync collapse state to document so App.jsx main can react via CSS
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      'data-sidebar',
+      collapsed ? 'collapsed' : 'expanded'
+    );
+  }, [collapsed]);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (themeRef.current && !themeRef.current.contains(e.target)) {
@@ -36,8 +49,6 @@ const Sidebar = () => {
       return JSON.parse(localStorage.getItem('trendingTags') || '[]').slice(0, 5);
     } catch { return []; }
   }, []);
-
-  const sidebarW = collapsed ? 'w-[72px]' : 'w-[260px]';
 
   return (
     <>
@@ -74,9 +85,11 @@ const Sidebar = () => {
         fixed left-0 top-0 z-50 h-screen flex flex-col
         transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
         sidebar
-        md:translate-x-0
-        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${sidebarW}
+        ${collapsed ? 'collapsed' : ''}
+        ${mobileOpen
+          ? 'translate-x-0 visible pointer-events-auto'
+          : '-translate-x-full md:translate-x-0 invisible md:visible pointer-events-none md:pointer-events-auto'
+        }
       `}>
 
         {/* ── Logo area ───────────────────────────────── */}
