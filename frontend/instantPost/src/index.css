@@ -14,8 +14,9 @@
     --radius: 16px;
     --radius-sm: 10px;
     --radius-lg: 28px;
-    --sidebar-w: 260px;
-    --sidebar-collapsed-w: 72px;
+    --navbar-h: 64px;         /* main nav row */
+    --navbar-strip-h: 28px;  /* tip strip (desktop) */
+    --navbar-full-h: 92px;   /* total on desktop */
   }
 }
 
@@ -163,43 +164,51 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* ─── Sidebar ───────────────────────────────────────── */
-.sidebar {
-  width: var(--sidebar-w);
-  background: rgba(255, 255, 255, 0.55);
+/* ─── Navbar ─────────────────────────────────────────── */
+.navbar {
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(32px) saturate(200%);
   -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 4px 0 40px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.05);
+  /* Total height: nav row + optional strip */
+  height: var(--navbar-h);
 }
-.dark .sidebar {
-  background: rgba(9, 15, 35, 0.75);
-  border-right-color: rgba(255, 255, 255, 0.05);
-  box-shadow: 4px 0 40px rgba(0, 0, 0, 0.4);
-}
-.sidebar.collapsed {
-  width: var(--sidebar-collapsed-w);
-}
-
-/* On mobile, sidebar should be full-width when open (max 280px) */
-@media (max-width: 767px) {
-  .sidebar {
-    width: min(280px, 85vw) !important;
-  }
+.dark .navbar {
+  background: rgba(9, 15, 35, 0.80);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.45);
 }
 
-/* Main content margin driven by sidebar state (desktop only) */
-@media (min-width: 768px) {
-  [data-sidebar="expanded"] main {
-    margin-left: var(--sidebar-w);
+/* On desktop, navbar also shows the tip strip (extra 28px) */
+@media (min-width: 1024px) {
+  .navbar {
+    height: var(--navbar-full-h);
   }
-  [data-sidebar="collapsed"] main {
-    margin-left: var(--sidebar-collapsed-w);
+}
+
+/* Content top padding to clear navbar */
+.pt-navbar {
+  padding-top: var(--navbar-h);
+}
+@media (min-width: 1024px) {
+  .pt-navbar {
+    padding-top: var(--navbar-full-h);
   }
-  /* Fallback when attribute not yet set */
-  :not([data-sidebar]) main {
-    margin-left: var(--sidebar-w);
-  }
+}
+
+/* ─── Mobile drawer ───────────────────────────────────── */
+.mobile-drawer {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.12);
+}
+.dark .mobile-drawer {
+  background: rgba(9, 15, 35, 0.92);
+  border-left-color: rgba(255, 255, 255, 0.06);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
 }
 
 /* ─── Theme helpers ─────────────────────────────────── */

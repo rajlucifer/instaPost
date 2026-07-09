@@ -5,12 +5,10 @@ import Feed from './pages/Feed';
 
 function App() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-slate-50 dark:bg-[#080d1a] text-slate-900 dark:text-slate-50 transition-colors duration-500 flex">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 dark:bg-[#080d1a] text-slate-900 dark:text-slate-50 transition-colors duration-500">
       <Sidebar />
-      {/* Main content — on mobile no left margin (sidebar overlays), on md+ shift by sidebar width */}
-      <main className="flex-1 min-h-screen
-        pt-14 md:pt-0
-        transition-[margin] duration-500">
+      {/* Main content — push down by navbar height */}
+      <main className="pt-navbar min-h-screen">
         <Routes>
           <Route path="/"     element={<CreatePost />} />
           <Route path="/feed" element={<Feed />} />
