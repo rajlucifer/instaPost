@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, RotateCcw, Check, Crop, Sliders, ZoomIn, ZoomOut } from 'lucide-react';
+import { X, RotateCcw, Check, Crop, Sliders, ZoomIn } from 'lucide-react';
 
 /* ─── Filter presets ────────────────────────────────────────────────── */
 const FILTERS = [

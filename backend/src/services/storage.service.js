@@ -5,9 +5,9 @@ const imageKit = new ImageKit({
 });
 
 async function uploadFile(buffer){
-    const result = imageKit.files.upload({
+    const result = await imageKit.files.upload({
         file:buffer.toString("base64"),
-        fileName:"filename-1"
+        fileName:`post-${Date.now()}`
     });
     return result;
 

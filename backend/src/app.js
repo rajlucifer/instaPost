@@ -114,7 +114,7 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
         if (req.body.tags) {
             if (typeof req.body.tags === 'string') {
                 tags = req.body.tags
-                    .split(/[,,;]/)
+                    .split(/[,;]/)
                     .map(tag => tag.trim().replace(/^#/, ""))
                     .filter(tag => tag.length > 0);
             } else if (Array.isArray(req.body.tags)) {

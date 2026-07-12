@@ -57,7 +57,8 @@ const Feed = () => {
       const counts = {};
       data.forEach(p => { counts[p._id] = p.likes || 0; });
       setLikeCounts(counts);
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
       showToast('Failed to load feed posts', 'error');
     } finally {
       setLoading(false);
