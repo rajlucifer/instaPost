@@ -6,7 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 import {
   Search, Heart, Share2, Download, Copy, LayoutGrid,
   AlertCircle, PlusCircle, X, ChevronLeft, ChevronRight,
-  SlidersHorizontal, Sparkles, Trash2, Clock, ImageOff, ArrowUp, Flame
+  SlidersHorizontal, Sparkles, Trash2, Clock, ImageOff, ArrowUp, Flame,
+  MessageCircle, Send, User
 } from 'lucide-react';
 
 const Feed = () => {
@@ -21,6 +22,10 @@ const Feed = () => {
   const [activeLightboxIndex, setActiveLightboxIndex] = useState(null);
   const [doubleTapPost, setDoubleTapPost] = useState(null); // { id, x, y }
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [comments, setComments] = useState({}); // { postId: [comment, ...] }
+  const [commentText, setCommentText] = useState('');
+  const [commentAuthor, setCommentAuthor] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
   const clickTimerRef = React.useRef(null);
 
   const navigate = useNavigate();
@@ -55,8 +60,13 @@ const Feed = () => {
       const initialLikes = JSON.parse(localStorage.getItem('likedPosts') || '{}');
       setLikedPosts(initialLikes);
       const counts = {};
-      data.forEach(p => { counts[p._id] = p.likes || 0; });
+      const commentsMap = {};
+      data.forEach(p => {
+        counts[p._id] = p.likes || 0;
+        commentsMap[p._id] = p.comments || [];
+      });
       setLikeCounts(counts);
+      setComments(commentsMap);
     } catch (err) {
       console.error('Failed to fetch posts:', err);
       showToast('Failed to load feed posts', 'error');
@@ -164,6 +174,35 @@ const Feed = () => {
       if (activeLightboxIndex !== null) setActiveLightboxIndex(null);
     } catch {
       showToast('Failed to delete post', 'error');
+    }
+  };
+
+  const handleAddComment = async (postId) => {
+    if (!commentText.trim()) { showToast('Please write a comment', 'error'); return; }
+    setCommentLoading(true);
+    try {
+      const res = await axios.post(
+        `https://instapost-nb20.onrender.com/posts/${postId}/comment`,
+        { text: commentText.trim(), author: commentAuthor.trim() || 'Anonymous' }
+      );
+      const newComment = res.data.data;
+      setComments(prev => ({ ...prev, [postId]: [...(prev[postId] || []), newComment] }));
+      setCommentText('');
+      showToast('Comment added!', 'success');
+    } catch {
+      showToast('Failed to add comment', 'error');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    try {
+      await axios.delete(`https://instapost-nb20.onrender.com/posts/${postId}/comment/${commentId}`);
+      setComments(prev => ({ ...prev, [postId]: (prev[postId] || []).filter(c => c._id !== commentId) }));
+      showToast('Comment deleted', 'success');
+    } catch {
+      showToast('Failed to delete comment', 'error');
     }
   };
 
@@ -504,6 +543,16 @@ const Feed = () => {
                     </span>
                   </button>
 
+                  {/* Comment count */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); openLightbox(post._id); }}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-400
+                      hover:text-slate-700 dark:hover:text-white transition-colors duration-200 group/comment"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 group-hover/comment:scale-110 transition-transform" />
+                    <span>{(comments[post._id] || []).length}</span>
+                  </button>
+
                   <button
                     onClick={() => handleShare(post)}
                     className="flex items-center gap-1.5 text-xs font-semibold text-slate-400
@@ -595,35 +644,116 @@ const Feed = () => {
               />
             </div>
 
-            {/* Detail side */}
-            <div className="w-full md:w-80 flex flex-col bg-white dark:bg-slate-900
-              border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800">
-              <div className="flex-1 p-5 overflow-y-auto">
-                <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: 'var(--primary)' }}>
-                  Post Details
-                </span>
-                {lightboxPost.createdAt && (
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-1 font-medium">
-                    <Clock className="h-3 w-3" /> {timeAgo(lightboxPost.createdAt)}
-                  </div>
-                )}
-                <p className="text-sm text-slate-800 dark:text-slate-200 font-medium leading-relaxed mt-3 first-letter:uppercase">
-                  {lightboxPost.caption}
-                </p>
-                {lightboxPost.tags?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-4">
-                    {lightboxPost.tags.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        onClick={() => { setSelectedTag(tag); setActiveLightboxIndex(null); }}
-                        className="tag-pill"
-                      >
-                        #{tag}
+              <div className="w-full md:w-80 flex flex-col bg-white dark:bg-slate-900
+                border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800">
+                <div className="flex-1 p-5 overflow-y-auto">
+                  <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: 'var(--primary)' }}>
+                    Post Details
+                  </span>
+                  {lightboxPost.createdAt && (
+                    <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-1 font-medium">
+                      <Clock className="h-3 w-3" /> {timeAgo(lightboxPost.createdAt)}
+                    </div>
+                  )}
+                  <p className="text-sm text-slate-800 dark:text-slate-200 font-medium leading-relaxed mt-3 first-letter:uppercase">
+                    {lightboxPost.caption}
+                  </p>
+                  {lightboxPost.tags?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-4">
+                      {lightboxPost.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          onClick={() => { setSelectedTag(tag); setActiveLightboxIndex(null); }}
+                          className="tag-pill"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── Comments Section ─────────────────── */}
+                  <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <MessageCircle className="h-3.5 w-3.5" style={{ color: 'var(--primary)' }} />
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: 'var(--primary)' }}>
+                        Comments
                       </span>
-                    ))}
+                      <span className="ml-auto text-[10px] font-bold text-slate-400">
+                        {(comments[lightboxPost._id] || []).length}
+                      </span>
+                    </div>
+
+                    {/* Comment list */}
+                    <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                      {(comments[lightboxPost._id] || []).length === 0 ? (
+                        <p className="text-xs text-slate-400 italic text-center py-3">No comments yet. Be the first!</p>
+                      ) : (
+                        (comments[lightboxPost._id] || []).map((c) => (
+                          <div key={c._id} className="group/c flex items-start gap-2 p-2.5 rounded-xl
+                            bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/40">
+                            <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0"
+                              style={{ background: 'var(--gradient)' }}>
+                              <User className="h-3 w-3 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none truncate">
+                                {c.author || 'Anonymous'}
+                              </p>
+                              <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed break-words">
+                                {c.text}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteComment(lightboxPost._id, c._id)}
+                              className="opacity-0 group-hover/c:opacity-100 transition-opacity
+                                h-5 w-5 rounded-md flex items-center justify-center
+                                text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 shrink-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Add comment */}
+                    <div className="mt-3 space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Your name (optional)"
+                        value={commentAuthor}
+                        onChange={(e) => setCommentAuthor(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-xs
+                          bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/40
+                          text-slate-800 dark:text-slate-200 placeholder-slate-400
+                          focus:outline-none focus:border-[var(--primary)] transition-colors"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Write a comment..."
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(lightboxPost._id); }}
+                          className="flex-1 px-3 py-2 rounded-xl text-xs
+                            bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/40
+                            text-slate-800 dark:text-slate-200 placeholder-slate-400
+                            focus:outline-none focus:border-[var(--primary)] transition-colors"
+                        />
+                        <button
+                          onClick={() => handleAddComment(lightboxPost._id)}
+                          disabled={commentLoading}
+                          className="h-8 w-8 rounded-xl flex items-center justify-center text-white
+                            shadow-md transition-all hover:scale-110 active:scale-95 shrink-0"
+                          style={{ background: 'var(--gradient)' }}
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
 
               <div className="p-5 border-t border-slate-100 dark:border-slate-800 space-y-4">
                 {/* Like */}

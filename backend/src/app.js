@@ -217,6 +217,44 @@ app.delete("/posts/:id", async(req, res) => {
     }
 });
 
+// ─── Comments ──────────────────────────────────────────────────────────────
+// Add a comment to a post
+app.post("/posts/:id/comment", async (req, res) => {
+    try {
+        const { text, author } = req.body;
+        if (!text || !text.trim()) {
+            return res.status(400).json({ message: "Comment text is required" });
+        }
+        const post = await postModel.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
+
+        post.comments.push({ text: text.trim(), author: (author || "Anonymous").trim() });
+        await post.save();
+        res.status(201).json({ message: "Comment added", data: post.comments[post.comments.length - 1] });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error while adding comment" });
+    }
+});
+
+// Delete a comment from a post
+app.delete("/posts/:id/comment/:commentId", async (req, res) => {
+    try {
+        const post = await postModel.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
+
+        const comment = post.comments.id(req.params.commentId);
+        if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+        post.comments.pull({ _id: req.params.commentId });
+        await post.save();
+        res.status(200).json({ message: "Comment deleted" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error while deleting comment" });
+    }
+});
+
 // Global error handler middleware
 app.use((err, req, res, next) => {
     console.error("Unhandled Error:", err);
