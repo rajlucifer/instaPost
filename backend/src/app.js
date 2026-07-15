@@ -66,11 +66,12 @@ app.get("/", (req, res) => {
     res.status(200).json({
         status: "ok",
         message: "InstaPost API is running 🚀",
-        version: "1.0.0",
+        version: "1.1.0",
         endpoints: {
             posts: "GET /posts",
             createPost: "POST /create-post",
             likePost: "PUT /posts/:id/like",
+            viewPost: "PUT /posts/:id/view",
             deletePost: "DELETE /posts/:id",
             limitStatus: "GET /posts/limit-status"
         }
@@ -214,6 +215,25 @@ app.delete("/posts/:id", async(req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error during delete" });
+    }
+});
+
+// ─── View Tracking ──────────────────────────────────────────────────────────
+// Increment view count when a post is opened (lightbox opened)
+app.put("/posts/:id/view", async (req, res) => {
+    try {
+        const post = await postModel.findByIdAndUpdate(
+            req.params.id,
+            { $inc: { views: 1 } },
+            { new: true }
+        );
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+        res.status(200).json({ message: "View recorded", views: post.views });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error during view tracking" });
     }
 });
 
