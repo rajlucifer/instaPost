@@ -321,6 +321,7 @@ const Feed = () => {
           {[
             { label: 'Total Posts', value: posts.length, icon: LayoutGrid },
             { label: 'Total Likes', value: Object.values(likeCounts).reduce((a, b) => a + b, 0), icon: Heart },
+            { label: 'Total Views', value: Object.values(viewCounts).reduce((a, b) => a + b, 0), icon: Eye },
             { label: 'Unique Tags', value: allTags.length, icon: Flame },
           ].map(({ label, value, icon: Icon }) => (
             <div key={label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl
@@ -676,8 +677,14 @@ const Feed = () => {
                     Post Details
                   </span>
                   {lightboxPost.createdAt && (
-                    <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-1 font-medium">
-                      <Clock className="h-3 w-3" /> {timeAgo(lightboxPost.createdAt)}
+                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {timeAgo(lightboxPost.createdAt)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {viewCounts[lightboxPost._id] || 0} views
+                      </span>
                     </div>
                   )}
                   <p className="text-sm text-slate-800 dark:text-slate-200 font-medium leading-relaxed mt-3 first-letter:uppercase">
