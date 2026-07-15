@@ -16,6 +16,7 @@ const Feed = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [likedPosts, setLikedPosts] = useState({});
   const [likeCounts, setLikeCounts] = useState({});
+  const [viewCounts, setViewCounts] = useState({}); // { postId: Number }
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [selectedTag, setSelectedTag] = useState(null);
@@ -61,12 +62,15 @@ const Feed = () => {
       setLikedPosts(initialLikes);
       const counts = {};
       const commentsMap = {};
+      const views = {};
       data.forEach(p => {
         counts[p._id] = p.likes || 0;
         commentsMap[p._id] = p.comments || [];
+        views[p._id] = p.views || 0;
       });
       setLikeCounts(counts);
       setComments(commentsMap);
+      setViewCounts(views);
     } catch (err) {
       console.error('Failed to fetch posts:', err);
       showToast('Failed to load feed posts', 'error');
@@ -231,9 +235,22 @@ const Feed = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [activeLightboxIndex, processedPosts]);
 
+  const trackView = async (postId) => {
+    // Optimistically update the local count
+    setViewCounts(prev => ({ ...prev, [postId]: (prev[postId] || 0) + 1 }));
+    try {
+      await axios.put(`https://instapost-nb20.onrender.com/posts/${postId}/view`);
+    } catch {
+      // Silently fail — view tracking is non-critical
+    }
+  };
+
   const openLightbox = (postId) => {
     const idx = processedPosts.findIndex(p => p._id === postId);
-    if (idx !== -1) setActiveLightboxIndex(idx);
+    if (idx !== -1) {
+      setActiveLightboxIndex(idx);
+      trackView(postId);
+    }
   };
 
   const lightboxPost = activeLightboxIndex !== null ? processedPosts[activeLightboxIndex] : null;
