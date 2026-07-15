@@ -7,7 +7,7 @@ import {
   Search, Heart, Share2, Download, Copy, LayoutGrid,
   AlertCircle, PlusCircle, X, ChevronLeft, ChevronRight,
   SlidersHorizontal, Sparkles, Trash2, Clock, ImageOff, ArrowUp, Flame,
-  MessageCircle, Send, User
+  MessageCircle, Send, User, Eye
 } from 'lucide-react';
 
 const Feed = () => {
@@ -221,6 +221,7 @@ const Feed = () => {
       if (sortBy === 'newest') return b._id.localeCompare(a._id);
       if (sortBy === 'oldest') return a._id.localeCompare(b._id);
       if (sortBy === 'most-liked') return (likeCounts[b._id] || 0) - (likeCounts[a._id] || 0);
+      if (sortBy === 'most-viewed') return (viewCounts[b._id] || 0) - (viewCounts[a._id] || 0);
       return 0;
     });
 
@@ -390,6 +391,7 @@ const Feed = () => {
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
                 <option value="most-liked">Most Liked</option>
+                <option value="most-viewed">Most Viewed</option>
               </select>
             </div>
 
@@ -569,6 +571,12 @@ const Feed = () => {
                     <MessageCircle className="h-3.5 w-3.5 group-hover/comment:scale-110 transition-transform" />
                     <span>{(comments[post._id] || []).length}</span>
                   </button>
+
+                  {/* View count */}
+                  <span className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>{viewCounts[post._id] || 0}</span>
+                  </span>
 
                   <button
                     onClick={() => handleShare(post)}
