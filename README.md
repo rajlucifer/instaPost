@@ -8,6 +8,7 @@ InstaPost is a premium, full-stack photo-sharing application built using **React
 
 * **Interactive Feed**: Live dashboard featuring tag-based filtering, text search, liking, lightbox presentation, caption-copying, and direct image downloads.
 * **Smart Uploads**: Drag-and-drop file interface with automated client-side validation for image formats and sizes under 5MB.
+* **Post View Tracking**: Every time a post is opened in the lightbox, its view count is incremented via a dedicated API call. The view count is displayed on each card, in the lightbox panel, and aggregated in a **Total Views** stat pill in the feed header. Posts can also be sorted by **Most Viewed**.
 * **Upload Quota Management**:
   * **Daily Limit**: Users are restricted to **3 photo uploads** per sliding 24-hour window. The frontend displays a real-time countdown showing exactly when the next slot opens.
   * **Total Capacity**: The application limits total storage to **15 photos** in the database. Users must delete older posts to free up slots.
@@ -101,6 +102,8 @@ Add these key-value pairs to your Render backend Environment Settings:
   caption: String,
   tags: [String],
   likes: Number,
+  views: Number,      // incremented each time a post is opened in the lightbox
+  comments: [{ text: String, author: String, createdAt: Date }],
   createdAt: Date,
   updatedAt: Date
 }
@@ -110,5 +113,8 @@ Add these key-value pairs to your Render backend Environment Settings:
 * `GET /posts` - Fetches all posts sorted by creation date (newest first).
 * `POST /create-post` - Handles uploading images to ImageKit and creating posts in MongoDB (enforces the 3/day and 15 total limits).
 * `GET /posts/limit-status` - Returns the current user storage statistics and calculations for the next available slot.
-* `DELETE /posts/:id` - Deletes a post from the database (freeing up storage space).
 * `PUT /posts/:id/like` - Increments the like count for a specific post.
+* `PUT /posts/:id/view` - Increments the view count for a specific post (called automatically when a post lightbox is opened).
+* `POST /posts/:id/comment` - Adds a comment to a post.
+* `DELETE /posts/:id/comment/:commentId` - Removes a comment from a post.
+* `DELETE /posts/:id` - Deletes a post from the database (freeing up storage space).
