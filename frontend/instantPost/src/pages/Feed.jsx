@@ -7,7 +7,7 @@ import {
   Search, Heart, Share2, Download, Copy, LayoutGrid,
   AlertCircle, PlusCircle, X, ChevronLeft, ChevronRight,
   SlidersHorizontal, Sparkles, Trash2, Clock, ImageOff, ArrowUp, Flame,
-  MessageCircle, Send, User, Eye
+  MessageCircle, Send, User, Eye, Bookmark
 } from 'lucide-react';
 
 const Feed = () => {
@@ -16,6 +16,8 @@ const Feed = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [likedPosts, setLikedPosts] = useState({});
   const [likeCounts, setLikeCounts] = useState({});
+  const [bookmarkedPosts, setBookmarkedPosts] = useState({}); // { postId: bool }
+  const [bookmarkCounts, setBookmarkCounts] = useState({});  // { postId: Number }
   const [viewCounts, setViewCounts] = useState({}); // { postId: Number }
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -60,17 +62,22 @@ const Feed = () => {
       setPosts(data);
       const initialLikes = JSON.parse(localStorage.getItem('likedPosts') || '{}');
       setLikedPosts(initialLikes);
+      const initialBookmarks = JSON.parse(localStorage.getItem('bookmarkedPosts') || '{}');
+      setBookmarkedPosts(initialBookmarks);
       const counts = {};
       const commentsMap = {};
       const views = {};
+      const bmCounts = {};
       data.forEach(p => {
         counts[p._id] = p.likes || 0;
         commentsMap[p._id] = p.comments || [];
         views[p._id] = p.views || 0;
+        bmCounts[p._id] = p.bookmarks || 0;
       });
       setLikeCounts(counts);
       setComments(commentsMap);
       setViewCounts(views);
+      setBookmarkCounts(bmCounts);
     } catch (err) {
       console.error('Failed to fetch posts:', err);
       showToast('Failed to load feed posts', 'error');
@@ -140,6 +147,20 @@ const Feed = () => {
       showToast('Added to your favorites!', 'success');
       try { await axios.put(`https://instapost-nb20.onrender.com/posts/${postId}/like`); } catch {}
     }
+  };
+
+  const toggleBookmark = async (postId) => {
+    const was = !!bookmarkedPosts[postId];
+    const next = { ...bookmarkedPosts, [postId]: !was };
+    setBookmarkedPosts(next);
+    localStorage.setItem('bookmarkedPosts', JSON.stringify(next));
+    setBookmarkCounts(prev => ({ ...prev, [postId]: (prev[postId] || 0) + (was ? -1 : 1) }));
+    showToast(was ? 'Removed from saved posts' : 'Post saved to bookmarks!', was ? 'info' : 'success');
+    try {
+      await axios.put(`https://instapost-nb20.onrender.com/posts/${postId}/bookmark`, {
+        action: was ? 'remove' : 'add'
+      });
+    } catch {}
   };
 
   const handleCopyCaption = (caption) => {
@@ -213,7 +234,10 @@ const Feed = () => {
   const processedPosts = posts
     .filter(p => {
       const okSearch = p.caption.toLowerCase().includes(searchTerm.toLowerCase());
-      const okFilter = filterType === 'liked' ? !!likedPosts[p._id] : true;
+      const okFilter =
+        filterType === 'liked'  ? !!likedPosts[p._id] :
+        filterType === 'saved'  ? !!bookmarkedPosts[p._id] :
+        true;
       const okTag = selectedTag ? p.tags?.some(t => t.toLowerCase() === selectedTag) : true;
       return okSearch && okFilter && okTag;
     })
@@ -322,6 +346,7 @@ const Feed = () => {
             { label: 'Total Posts', value: posts.length, icon: LayoutGrid },
             { label: 'Total Likes', value: Object.values(likeCounts).reduce((a, b) => a + b, 0), icon: Heart },
             { label: 'Total Views', value: Object.values(viewCounts).reduce((a, b) => a + b, 0), icon: Eye },
+            { label: 'Total Saved', value: Object.values(bookmarkCounts).reduce((a, b) => a + b, 0), icon: Bookmark },
             { label: 'Unique Tags', value: allTags.length, icon: Flame },
           ].map(({ label, value, icon: Icon }) => (
             <div key={label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl
@@ -586,6 +611,27 @@ const Feed = () => {
                   >
                     <Share2 className="h-3.5 w-3.5 group-hover/share:scale-110 transition-transform" />
                     <span className="hidden sm:inline">Share</span>
+                  </button>
+
+                  {/* Bookmark button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleBookmark(post._id); }}
+                    className="flex items-center gap-1.5 text-xs font-semibold transition-all duration-200 group/bm"
+                  >
+                    <Bookmark
+                      className={`h-3.5 w-3.5 transition-all duration-300
+                        ${bookmarkedPosts[post._id] ? 'scale-110' : 'group-hover/bm:scale-110'}`}
+                      style={{
+                        color: bookmarkedPosts[post._id] ? 'var(--primary)' : undefined,
+                        fill:  bookmarkedPosts[post._id] ? 'var(--primary)' : 'none',
+                      }}
+                    />
+                    <span
+                      style={{ color: bookmarkedPosts[post._id] ? 'var(--primary)' : undefined }}
+                      className={bookmarkedPosts[post._id] ? 'font-bold' : 'text-slate-400 dark:text-slate-500'}
+                    >
+                      {bookmarkCounts[post._id] || 0}
+                    </span>
                   </button>
                 </div>
               </div>
