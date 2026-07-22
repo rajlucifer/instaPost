@@ -390,17 +390,21 @@ const Feed = () => {
             {/* All / Fav toggle */}
             <div className="flex bg-slate-100/80 dark:bg-slate-800/80 p-0.5 rounded-2xl
               border border-slate-200/50 dark:border-slate-700/50">
-              {['all', 'liked'].map(f => (
+              {[
+                { id: 'all',   label: 'All',       icon: null },
+                { id: 'liked', label: 'Favorites', icon: Heart },
+                { id: 'saved', label: 'Saved',     icon: Bookmark },
+              ].map(({ id, label, icon: Icon }) => (
                 <button
-                  key={f}
-                  onClick={() => setFilterType(f)}
+                  key={id}
+                  onClick={() => setFilterType(id)}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold
                     transition-all duration-200 cursor-pointer capitalize
-                    ${filterType === f ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
-                  style={filterType === f ? { color: 'var(--primary)' } : {}}
+                    ${filterType === id ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                  style={filterType === id ? { color: 'var(--primary)' } : {}}
                 >
-                  {f === 'liked' && <Heart className={`h-3 w-3 ${f === filterType ? 'fill-current' : ''}`} />}
-                  {f === 'liked' ? 'Favorites' : 'All'}
+                  {Icon && <Icon className={`h-3 w-3 ${id === filterType ? 'fill-current' : ''}`} />}
+                  {label}
                 </button>
               ))}
             </div>
