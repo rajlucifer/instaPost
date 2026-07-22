@@ -66,14 +66,17 @@ app.get("/", (req, res) => {
     res.status(200).json({
         status: "ok",
         message: "InstaPost API is running 🚀",
-        version: "1.1.0",
+        version: "1.2.0",
         endpoints: {
             posts: "GET /posts",
             createPost: "POST /create-post",
             likePost: "PUT /posts/:id/like",
             viewPost: "PUT /posts/:id/view",
+            bookmarkPost: "PUT /posts/:id/bookmark",
             deletePost: "DELETE /posts/:id",
-            limitStatus: "GET /posts/limit-status"
+            limitStatus: "GET /posts/limit-status",
+            addComment: "POST /posts/:id/comment",
+            deleteComment: "DELETE /posts/:id/comment/:commentId"
         }
     });
 });
@@ -215,6 +218,30 @@ app.delete("/posts/:id", async(req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error during delete" });
+    }
+});
+
+// ─── Bookmark Toggle ────────────────────────────────────────────────────────
+// Increments the global bookmark count (client stores own state in localStorage)
+app.put("/posts/:id/bookmark", async (req, res) => {
+    try {
+        const { action } = req.body; // "add" | "remove"
+        const inc = action === "remove" ? -1 : 1;
+        const post = await postModel.findByIdAndUpdate(
+            req.params.id,
+            { $inc: { bookmarks: inc } },
+            { new: true }
+        );
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+        res.status(200).json({
+            message: action === "remove" ? "Bookmark removed" : "Post bookmarked",
+            bookmarks: Math.max(0, post.bookmarks)
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error during bookmark" });
     }
 });
 
