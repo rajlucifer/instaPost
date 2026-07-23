@@ -12,6 +12,7 @@ const postSchema =  new mongoose.Schema({
     likes: { type: Number, default: 0 },
     views: { type: Number, default: 0 },
     bookmarks: { type: Number, default: 0 },
+    shares: { type: Number, default: 0 },
     comments: { type: [commentSchema], default: [] }
 }, { timestamps: true });
 //here the post is like the collection which store the data which is write in the mongoose.model("post",postSchema);
