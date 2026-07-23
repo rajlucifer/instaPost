@@ -19,6 +19,7 @@ const Feed = () => {
   const [bookmarkedPosts, setBookmarkedPosts] = useState({}); // { postId: bool }
   const [bookmarkCounts, setBookmarkCounts] = useState({});  // { postId: Number }
   const [viewCounts, setViewCounts] = useState({}); // { postId: Number }
+  const [shareCounts, setShareCounts] = useState({}); // { postId: Number }
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [selectedTag, setSelectedTag] = useState(null);
@@ -68,16 +69,19 @@ const Feed = () => {
       const commentsMap = {};
       const views = {};
       const bmCounts = {};
+      const shares = {};
       data.forEach(p => {
         counts[p._id] = p.likes || 0;
         commentsMap[p._id] = p.comments || [];
         views[p._id] = p.views || 0;
         bmCounts[p._id] = p.bookmarks || 0;
+        shares[p._id] = p.shares || 0;
       });
       setLikeCounts(counts);
       setComments(commentsMap);
       setViewCounts(views);
       setBookmarkCounts(bmCounts);
+      setShareCounts(shares);
     } catch (err) {
       console.error('Failed to fetch posts:', err);
       showToast('Failed to load feed posts', 'error');
@@ -168,13 +172,16 @@ const Feed = () => {
     showToast('Caption copied!', 'success');
   };
 
-  const handleShare = (post) => {
+  const handleShare = async (post) => {
     if (navigator.share) {
       navigator.share({ title: 'InstaPost', text: post.caption, url: post.image }).catch(console.error);
     } else {
       navigator.clipboard.writeText(post.image);
       showToast('Image URL copied!', 'success');
     }
+    // Track the share server-side
+    setShareCounts(prev => ({ ...prev, [post._id]: (prev[post._id] || 0) + 1 }));
+    try { await axios.put(`https://instapost-nb20.onrender.com/posts/${post._id}/share`); } catch {}
   };
 
   const handleDownload = async (imageUrl, caption) => {
@@ -246,6 +253,7 @@ const Feed = () => {
       if (sortBy === 'oldest') return a._id.localeCompare(b._id);
       if (sortBy === 'most-liked') return (likeCounts[b._id] || 0) - (likeCounts[a._id] || 0);
       if (sortBy === 'most-viewed') return (viewCounts[b._id] || 0) - (viewCounts[a._id] || 0);
+      if (sortBy === 'most-shared') return (shareCounts[b._id] || 0) - (shareCounts[a._id] || 0);
       return 0;
     });
 
@@ -347,6 +355,7 @@ const Feed = () => {
             { label: 'Total Likes', value: Object.values(likeCounts).reduce((a, b) => a + b, 0), icon: Heart },
             { label: 'Total Views', value: Object.values(viewCounts).reduce((a, b) => a + b, 0), icon: Eye },
             { label: 'Total Saved', value: Object.values(bookmarkCounts).reduce((a, b) => a + b, 0), icon: Bookmark },
+            { label: 'Total Shares', value: Object.values(shareCounts).reduce((a, b) => a + b, 0), icon: Share2 },
             { label: 'Unique Tags', value: allTags.length, icon: Flame },
           ].map(({ label, value, icon: Icon }) => (
             <div key={label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl
@@ -422,6 +431,7 @@ const Feed = () => {
                 <option value="oldest">Oldest</option>
                 <option value="most-liked">Most Liked</option>
                 <option value="most-viewed">Most Viewed</option>
+                <option value="most-shared">Most Shared</option>
               </select>
             </div>
 
