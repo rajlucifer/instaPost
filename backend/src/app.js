@@ -66,12 +66,14 @@ app.get("/", (req, res) => {
     res.status(200).json({
         status: "ok",
         message: "InstaPost API is running 🚀",
-        version: "1.2.0",
+        version: "1.3.0",
         endpoints: {
             posts: "GET /posts",
+            searchPosts: "GET /posts/search?q=&tag=",
             createPost: "POST /create-post",
             likePost: "PUT /posts/:id/like",
             viewPost: "PUT /posts/:id/view",
+            sharePost: "PUT /posts/:id/share",
             bookmarkPost: "PUT /posts/:id/bookmark",
             deletePost: "DELETE /posts/:id",
             limitStatus: "GET /posts/limit-status",
@@ -178,6 +180,34 @@ app.get("/posts/limit-status", async (req, res) => {
     }
 });
 
+// ─── Search Posts ────────────────────────────────────────────────────────────
+// GET /posts/search?q=sunset&tag=nature
+// Searches posts by caption (case-insensitive) and/or tag
+app.get("/posts/search", async (req, res) => {
+    try {
+        const { q, tag } = req.query;
+        const filter = {};
+
+        if (q && q.trim()) {
+            filter.caption = { $regex: q.trim(), $options: 'i' };
+        }
+        if (tag && tag.trim()) {
+            filter.tags = { $elemMatch: { $regex: `^${tag.trim()}$`, $options: 'i' } };
+        }
+
+        const posts = await postModel.find(filter).sort({ createdAt: -1 });
+        res.status(200).json({
+            message: "Search results",
+            query: { q: q || "", tag: tag || "" },
+            count: posts.length,
+            data: posts
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error during search" });
+    }
+});
+
 app.get("/posts",async(req,res)=>{
     try {
         const post = await postModel.find().sort({ createdAt: -1 });
@@ -261,6 +291,25 @@ app.put("/posts/:id/view", async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error during view tracking" });
+    }
+});
+
+// ─── Share Tracking ─────────────────────────────────────────────────────────
+// Increment share count when a user shares a post
+app.put("/posts/:id/share", async (req, res) => {
+    try {
+        const post = await postModel.findByIdAndUpdate(
+            req.params.id,
+            { $inc: { shares: 1 } },
+            { new: true }
+        );
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+        res.status(200).json({ message: "Share recorded", shares: post.shares });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error during share tracking" });
     }
 });
 
