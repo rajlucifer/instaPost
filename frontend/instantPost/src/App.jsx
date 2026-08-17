@@ -2,6 +2,9 @@ import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import CreatePost from './pages/CreatePost';
 import Feed from './pages/Feed';
+import Login from './pages/Login';
+import SignUp from './pages/SignUp';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -10,8 +13,24 @@ function App() {
       {/* Main content — push down by navbar height */}
       <main className="pt-navbar min-h-screen">
         <Routes>
-          <Route path="/"     element={<CreatePost />} />
-          <Route path="/feed" element={<Feed />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <CreatePost />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/feed"
+            element={
+              <ProtectedRoute>
+                <Feed />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
         </Routes>
       </main>
     </div>

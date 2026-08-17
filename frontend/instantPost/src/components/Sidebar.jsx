@@ -2,18 +2,23 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Camera, Grid, PlusCircle, Palette, Sun, Moon,
-  Settings, LogOut, Sparkles, Menu, X, Zap, TrendingUp, Hash
+  Settings, LogOut, Sparkles, Menu, X, Zap, TrendingUp, Hash,
+  LogIn, UserPlus
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
   const location = useLocation();
   const { theme, toggleTheme, colorTheme, setColorTheme, themes } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const themeRef = useRef(null);
   const userRef = useRef(null);
+
+  const initials = user?.username ? user.username.substring(0, 2).toUpperCase() : 'AM';
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -199,72 +204,89 @@ const Sidebar = () => {
               </div>
             </button>
 
-            {/* User Profile */}
-            <div className="relative hidden md:block" ref={userRef}>
-              <button
-                onClick={() => setUserOpen(u => !u)}
-                className={`flex items-center gap-2 h-9 px-2 rounded-xl transition-all duration-300
-                  bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800
-                  border border-white/30 dark:border-slate-700/30
-                  hover:scale-105 hover:shadow-md group
-                  ${userOpen ? 'bg-white dark:bg-slate-800 shadow-md' : ''}`}
-              >
-                <div className="relative">
-                  <div className="h-7 w-7 rounded-lg theme-gradient p-0.5 shadow-sm glow-sm">
-                    <div className="h-full w-full rounded-md bg-slate-950 flex items-center justify-center
-                      text-white text-[9px] font-black tracking-wide uppercase">
-                      AM
+            {/* User Profile / Auth buttons */}
+            {isAuthenticated ? (
+              <div className="relative hidden md:block" ref={userRef}>
+                <button
+                  onClick={() => setUserOpen(u => !u)}
+                  className={`flex items-center gap-2 h-9 px-2 rounded-xl transition-all duration-300
+                    bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800
+                    border border-white/30 dark:border-slate-700/30
+                    hover:scale-105 hover:shadow-md group
+                    ${userOpen ? 'bg-white dark:bg-slate-800 shadow-md' : ''}`}
+                >
+                  <div className="relative">
+                    <div className="h-7 w-7 rounded-lg theme-gradient p-0.5 shadow-sm glow-sm">
+                      <div className="h-full w-full rounded-md bg-slate-950 flex items-center justify-center
+                        text-white text-[9px] font-black tracking-wide uppercase">
+                        {initials}
+                      </div>
                     </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full
+                      bg-emerald-400 border-2 border-white dark:border-slate-900" />
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full
-                    bg-emerald-400 border-2 border-white dark:border-slate-900" />
-                </div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 hidden lg:block">Alex Mercer</span>
-              </button>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200 hidden lg:block">
+                    {user?.username}
+                  </span>
+                </button>
 
-              {userOpen && (
-                <div className="absolute top-12 right-0 z-50 animate-scale-in
-                  p-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
-                  shadow-2xl border border-slate-200/50 dark:border-slate-700/50 w-52">
-                  {/* Profile header */}
-                  <div className="flex items-center gap-3 p-2.5 mb-1">
-                    <div className="relative shrink-0">
-                      <div className="h-10 w-10 rounded-xl theme-gradient p-0.5 shadow-md glow-sm">
-                        <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center
-                          text-white text-[10px] font-black uppercase">
-                          AM
+                {userOpen && (
+                  <div className="absolute top-12 right-0 z-50 animate-scale-in
+                    p-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
+                    shadow-2xl border border-slate-200/50 dark:border-slate-700/50 w-56">
+                    {/* Profile header */}
+                    <div className="flex items-center gap-3 p-2.5 mb-1">
+                      <div className="relative shrink-0">
+                        <div className="h-10 w-10 rounded-xl theme-gradient p-0.5 shadow-md glow-sm">
+                          <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center
+                            text-white text-[10px] font-black uppercase">
+                            {initials}
+                          </div>
+                        </div>
+                        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full
+                          bg-emerald-400 border-2 border-white dark:border-slate-900" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user?.username}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="text-[9px] font-semibold text-emerald-500">Active</span>
                         </div>
                       </div>
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full
-                        bg-emerald-400 border-2 border-white dark:border-slate-900" />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Alex Mercer</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">@alexmercer</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-[9px] font-semibold text-emerald-500">Active Now</span>
-                      </div>
-                    </div>
+                    <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+                    <button
+                      onClick={() => { logout(); setUserOpen(false); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium
+                        text-slate-600 dark:text-slate-300
+                        hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400
+                        transition-all duration-200 group"
+                    >
+                      <LogOut className="h-3.5 w-3.5 text-slate-400 group-hover:text-rose-500 transition-colors" />
+                      Logout
+                    </button>
                   </div>
-                  <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
-                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium
-                    text-slate-600 dark:text-slate-300
-                    hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-800 dark:hover:text-white
-                    transition-all duration-200 group">
-                    <Settings className="h-3.5 w-3.5 text-slate-400 group-hover:rotate-90 transition-transform duration-300" />
-                    Settings
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium
-                    text-slate-600 dark:text-slate-300
-                    hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400
-                    transition-all duration-200 group">
-                    <LogOut className="h-3.5 w-3.5 text-slate-400 group-hover:text-rose-500 transition-colors" />
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-all"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  <span>Log In</span>
+                </Link>
+                <Link
+                  to="/signup"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white theme-gradient shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>Sign Up</span>
+                </Link>
+              </div>
+            )}
 
             {/* Mobile menu button */}
             <button
@@ -444,34 +466,54 @@ const Sidebar = () => {
             </div>
           </button>
 
-          {/* User card */}
-          <div className="flex items-center justify-between p-2.5 rounded-2xl
-            bg-white/40 dark:bg-slate-900/40 border border-white/20 dark:border-slate-800/20">
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
-                <div className="h-9 w-9 rounded-xl theme-gradient p-0.5 shadow-md glow-sm">
-                  <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center
-                    text-white text-[10px] font-black uppercase">
-                    AM
+          {/* User card / Mobile Auth Actions */}
+          {isAuthenticated ? (
+            <div className="flex items-center justify-between p-2.5 rounded-2xl
+              bg-white/40 dark:bg-slate-900/40 border border-white/20 dark:border-slate-800/20">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="relative shrink-0">
+                  <div className="h-9 w-9 rounded-xl theme-gradient p-0.5 shadow-md glow-sm">
+                    <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center
+                      text-white text-[10px] font-black uppercase">
+                      {initials}
+                    </div>
                   </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full
+                    bg-emerald-400 border-2 border-white dark:border-slate-900" />
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full
-                  bg-emerald-400 border-2 border-white dark:border-slate-900" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{user?.username}</p>
+                  <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Alex Mercer</p>
-                <p className="text-[10px] text-slate-400">@alexmercer</p>
-              </div>
-            </div>
-            <div className="flex gap-0.5">
-              <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors" title="Settings">
-                <Settings className="h-3.5 w-3.5" />
-              </button>
-              <button className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 transition-colors" title="Logout">
-                <LogOut className="h-3.5 w-3.5" />
+              <button
+                onClick={() => { logout(); setMobileOpen(false); }}
+                className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors shrink-0"
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center transition-all"
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span>Log In</span>
+              </Link>
+              <Link
+                to="/signup"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white theme-gradient shadow-md text-center transition-all"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>Sign Up</span>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </>

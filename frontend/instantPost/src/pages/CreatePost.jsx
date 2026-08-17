@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
@@ -79,6 +80,7 @@ const CreatePost = () => {
   const { showToast } = useToast();
   const { currentTheme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [preview, setPreview] = useState(null);
   const [caption, setCaption] = useState('');
   const [tags, setTags] = useState('');
@@ -92,17 +94,26 @@ const CreatePost = () => {
   const uploadRef = useRef(null);
 
   const generateMagicCaption = () => {
-    if (isMagicLoading || isLimitReached) return;
+    if (!preview) return;
     setIsMagicLoading(true);
     setTimeout(() => {
-      setCaption(MAGIC_CAPTIONS[Math.floor(Math.random() * MAGIC_CAPTIONS.length)]);
+      const sampleCaptions = [
+        "Chasing light and capturing moments ✨",
+        "A little snippet of aesthetic perfection 🌿",
+        "Visual storytelling at its finest 📷",
+        "Frames that make time stand still 🌟",
+        "Living for the raw, unedited beauty of life 💫"
+      ];
+      const random = sampleCaptions[Math.floor(Math.random() * sampleCaptions.length)];
+      setCaption(random);
       setIsMagicLoading(false);
+      showToast('Magic caption generated!', 'success');
     }, 500);
   };
 
   const fetchLimitStatus = async () => {
     try {
-      const res = await axios.get("https://instapost-nb20.onrender.com/posts/limit-status");
+      const res = await axios.get(`${API_BASE_URL}/posts/limit-status`);
       setLimitStatus(res.data);
     } catch (error) {
       console.error("Failed to fetch limit status:", error);
@@ -163,16 +174,46 @@ const CreatePost = () => {
     if (!caption.trim()) { showToast('Please write an interesting caption', 'error'); return; }
 
     setLoading(true);
+    setUploadProgress(0);
+
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('caption', caption.trim());
     formData.append('tags', tags.trim());
 
+    let processingInterval = null;
+
     try {
-      await axios.post("https://instapost-nb20.onrender.com/create-post", formData);
-      showToast('Post shared with the world!', 'success');
-      setTimeout(() => navigate("/feed"), 1000);
+      await axios.post(`${API_BASE_URL}/create-post`, formData, {
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            // Scale browser network upload to 0% -> 70%
+            const percent = Math.round((progressEvent.loaded * 70) / progressEvent.total);
+            setUploadProgress(percent);
+
+            // Once network transfer reaches 70%, start smooth processing progress (70% -> 95%)
+            if (percent >= 70 && !processingInterval) {
+              processingInterval = setInterval(() => {
+                setUploadProgress((prev) => {
+                  if (prev < 95) return prev + 1;
+                  clearInterval(processingInterval);
+                  return prev;
+                });
+              }, 100);
+            }
+          }
+        }
+      });
+
+      if (processingInterval) clearInterval(processingInterval);
+      setUploadProgress(100);
+      showToast('Post created & shared successfully!', 'success');
+
+      setTimeout(() => {
+        navigate("/feed");
+      }, 600);
     } catch (error) {
+      if (processingInterval) clearInterval(processingInterval);
       console.error(error);
       showToast(error.response?.data?.message || 'Failed to create post.', 'error');
     } finally {
@@ -496,8 +537,13 @@ const CreatePost = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="relative rounded-2xl overflow-hidden" style={{ height: 320 }}>
-                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="relative w-full h-[320px] rounded-2xl overflow-hidden bg-slate-900" style={{ width: '100%', height: '320px' }}>
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      className="w-full h-full object-cover object-center"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                    />
                     {/* Gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     {/* Badge */}
@@ -578,21 +624,37 @@ const CreatePost = () => {
 
                 {loading ? (
                   <div className="flex-1 flex flex-col items-center justify-center gap-5 py-10">
-                    {/* Spinner */}
-                    <div className="relative h-20 w-20">
+                    {/* Ring Spinner with percentage text in center */}
+                    <div className="relative h-24 w-24 flex items-center justify-center">
                       <div className="absolute inset-0 rounded-full"
-                        style={{ border: '2px solid color-mix(in srgb, var(--primary) 20%, transparent)' }} />
-                      <div className="absolute inset-0 rounded-full border-[2.5px] border-transparent animate-spin"
-                        style={{ borderTopColor: 'var(--primary)' }} />
-                      <div className="absolute inset-[6px] rounded-full opacity-25 animate-pulse"
+                        style={{ border: '3px solid color-mix(in srgb, var(--primary) 20%, transparent)' }} />
+                      <div className="absolute inset-0 rounded-full border-[3px] border-transparent animate-spin"
+                        style={{ borderTopColor: 'var(--primary)', borderRightColor: 'var(--primary)' }} />
+                      <div className="absolute inset-[8px] rounded-full opacity-20 animate-pulse"
                         style={{ background: 'var(--gradient)' }} />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Send className="h-6 w-6" style={{ color: 'var(--primary)' }} />
+                      <div className="flex flex-col items-center justify-center z-10">
+                        <span className="text-xl font-black text-slate-800 dark:text-white leading-none">
+                          {uploadProgress}%
+                        </span>
                       </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Publishing your post...</p>
-                      <p className="text-xs text-slate-400 mt-1">Sharing with the community</p>
+
+                    <div className="text-center w-full max-w-xs space-y-2">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                        {uploadProgress < 100 ? `Uploading Image (${uploadProgress}%)` : 'Processing & Finalizing...'}
+                      </p>
+
+                      {/* Animated Progress Bar */}
+                      <div className="w-full bg-slate-200/80 dark:bg-slate-800/80 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-300/40 dark:border-slate-700/50">
+                        <div
+                          className="h-full rounded-full transition-all duration-300 theme-gradient shadow-sm"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+
+                      <p className="text-[11px] text-slate-400">
+                        {uploadProgress < 100 ? 'Transferring file data...' : 'Almost done! Redirecting to feed...'}
+                      </p>
                     </div>
                   </div>
                 ) : (

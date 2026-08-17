@@ -1,4 +1,5 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 
 //it is use to access the image type format like  form-data so that express can't do it because it work with raw data formate
 const multer = require("multer");
@@ -6,12 +7,12 @@ const multer = require("multer");
 const uploadFile = require("./services/storage.service");
 
 const postModel = require("./models.js/post");
+const authRoutes = require("./routes/auth.routes");
+const { protect } = require("./middlewares/auth.middleware");
 
 //using the cors 
 
 const cors = require("cors");
-
-
 
 const app = express();
 //using the middleware cors work properly with frontend and backend connection
@@ -56,6 +57,12 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(cookieParser());
+
+// Mount auth routes
+app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
+
 //uploading the image in multer in ram
 const upload = multer({
     storage:multer.memoryStorage()
@@ -66,7 +73,7 @@ app.get("/", (req, res) => {
     res.status(200).json({
         status: "ok",
         message: "InstaPost API is running 🚀",
-        version: "1.3.0",
+        version: "1.4.0",
         endpoints: {
             posts: "GET /posts",
             searchPosts: "GET /posts/search?q=&tag=",
@@ -82,8 +89,9 @@ app.get("/", (req, res) => {
         }
     });
 });
-// to upload it we use the upload.single("key") like we use the image which same as the schema name we use
-app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
+
+// Create Post (Protected — associated with logged in user)
+app.post("/create-post", protect, upload.single("image"), async (req, res) => {
     try {
         console.log(req.body);
         console.log(req.file);
@@ -95,17 +103,18 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
             return res.status(400).json({ message: "No caption provided" });
         }
 
-        // Check total limit (max 15)
-        const totalCount = await postModel.countDocuments();
+        // Check user-specific total limit (max 15)
+        const totalCount = await postModel.countDocuments({ user: req.user._id });
         if (totalCount >= 15) {
             return res.status(400).json({ 
                 message: "Total limit reached. You can only have up to 15 photos. Please delete some photos to add more." 
             });
         }
 
-        // Check daily limit (max 3 in 24 hours)
+        // Check user-specific daily limit (max 3 in 24 hours)
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const dailyCount = await postModel.countDocuments({
+            user: req.user._id,
             createdAt: { $gte: twentyFourHoursAgo }
         });
         if (dailyCount >= 3) {
@@ -114,7 +123,7 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
             });
         }
 
-        const result = await uploadFile(req.file.buffer);
+        const result = await uploadFile(req.file.buffer, req.file.originalname || "photo.jpg");
         
         let tags = [];
         if (req.body.tags) {
@@ -129,15 +138,16 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
         }
 
         const post = await postModel.create({
-            image:result.url,
-            caption:req.body.caption,
-            tags:tags
+            user: req.user._id,
+            image: result.url,
+            caption: req.body.caption,
+            tags: tags
         });
 
         res.status(201).json({
-            message:"Data Successfully Uploaded",
-            result:result,
-            data:post
+            message: "Data Successfully Uploaded",
+            result: result,
+            data: post
         });
     } catch (error) {
         console.error(error);
@@ -146,17 +156,21 @@ app.post("/create-post" ,upload.single("image") ,async(req,res)=>{
         });
     }
 });
-app.get("/posts/limit-status", async (req, res) => {
+
+// User-specific limit status
+app.get("/posts/limit-status", protect, async (req, res) => {
     try {
-        const totalCount = await postModel.countDocuments();
+        const totalCount = await postModel.countDocuments({ user: req.user._id });
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const dailyCount = await postModel.countDocuments({
+            user: req.user._id,
             createdAt: { $gte: twentyFourHoursAgo }
         });
 
         let nextUploadAvailableAt = null;
         if (dailyCount >= 3) {
             const oldestPostInWindow = await postModel.findOne({
+                user: req.user._id,
                 createdAt: { $gte: twentyFourHoursAgo }
             }).sort({ createdAt: 1 });
 
@@ -180,13 +194,11 @@ app.get("/posts/limit-status", async (req, res) => {
     }
 });
 
-// ─── Search Posts ────────────────────────────────────────────────────────────
-// GET /posts/search?q=sunset&tag=nature
-// Searches posts by caption (case-insensitive) and/or tag
-app.get("/posts/search", async (req, res) => {
+// Search Posts (Protected — filtered by logged in user)
+app.get("/posts/search", protect, async (req, res) => {
     try {
         const { q, tag } = req.query;
-        const filter = {};
+        const filter = { user: req.user._id };
 
         if (q && q.trim()) {
             filter.caption = { $regex: q.trim(), $options: 'i' };
@@ -208,12 +220,13 @@ app.get("/posts/search", async (req, res) => {
     }
 });
 
-app.get("/posts",async(req,res)=>{
+// Get User's Uploaded Posts Only
+app.get("/posts", protect, async (req, res) => {
     try {
-        const post = await postModel.find().sort({ createdAt: -1 });
+        const post = await postModel.find({ user: req.user._id }).sort({ createdAt: -1 });
         res.status(200).json({
-            message:"successfully data fetched",
-            data:post
+            message: "successfully data fetched",
+            data: post
         });
     } catch (error) {
         console.error(error);
@@ -223,9 +236,9 @@ app.get("/posts",async(req,res)=>{
     }
 });
 
-app.put("/posts/:id/like", async(req, res) => {
+app.put("/posts/:id/like", protect, async (req, res) => {
     try {
-        const post = await postModel.findById(req.params.id);
+        const post = await postModel.findOne({ _id: req.params.id, user: req.user._id });
         if (!post) {
             return res.status(404).json({ message: "Post not found" });
         }
@@ -238,9 +251,9 @@ app.put("/posts/:id/like", async(req, res) => {
     }
 });
 
-app.delete("/posts/:id", async(req, res) => {
+app.delete("/posts/:id", protect, async (req, res) => {
     try {
-        const post = await postModel.findByIdAndDelete(req.params.id);
+        const post = await postModel.findOneAndDelete({ _id: req.params.id, user: req.user._id });
         if (!post) {
             return res.status(404).json({ message: "Post not found" });
         }
@@ -251,14 +264,13 @@ app.delete("/posts/:id", async(req, res) => {
     }
 });
 
-// ─── Bookmark Toggle ────────────────────────────────────────────────────────
-// Increments the global bookmark count (client stores own state in localStorage)
-app.put("/posts/:id/bookmark", async (req, res) => {
+// Bookmark Toggle
+app.put("/posts/:id/bookmark", protect, async (req, res) => {
     try {
-        const { action } = req.body; // "add" | "remove"
+        const { action } = req.body;
         const inc = action === "remove" ? -1 : 1;
-        const post = await postModel.findByIdAndUpdate(
-            req.params.id,
+        const post = await postModel.findOneAndUpdate(
+            { _id: req.params.id, user: req.user._id },
             { $inc: { bookmarks: inc } },
             { new: true }
         );
@@ -275,12 +287,11 @@ app.put("/posts/:id/bookmark", async (req, res) => {
     }
 });
 
-// ─── View Tracking ──────────────────────────────────────────────────────────
-// Increment view count when a post is opened (lightbox opened)
-app.put("/posts/:id/view", async (req, res) => {
+// View Tracking
+app.put("/posts/:id/view", protect, async (req, res) => {
     try {
-        const post = await postModel.findByIdAndUpdate(
-            req.params.id,
+        const post = await postModel.findOneAndUpdate(
+            { _id: req.params.id, user: req.user._id },
             { $inc: { views: 1 } },
             { new: true }
         );
@@ -294,12 +305,11 @@ app.put("/posts/:id/view", async (req, res) => {
     }
 });
 
-// ─── Share Tracking ─────────────────────────────────────────────────────────
-// Increment share count when a user shares a post
-app.put("/posts/:id/share", async (req, res) => {
+// Share Tracking
+app.put("/posts/:id/share", protect, async (req, res) => {
     try {
-        const post = await postModel.findByIdAndUpdate(
-            req.params.id,
+        const post = await postModel.findOneAndUpdate(
+            { _id: req.params.id, user: req.user._id },
             { $inc: { shares: 1 } },
             { new: true }
         );
@@ -313,18 +323,17 @@ app.put("/posts/:id/share", async (req, res) => {
     }
 });
 
-// ─── Comments ──────────────────────────────────────────────────────────────
-// Add a comment to a post
-app.post("/posts/:id/comment", async (req, res) => {
+// Comments
+app.post("/posts/:id/comment", protect, async (req, res) => {
     try {
         const { text, author } = req.body;
         if (!text || !text.trim()) {
             return res.status(400).json({ message: "Comment text is required" });
         }
-        const post = await postModel.findById(req.params.id);
+        const post = await postModel.findOne({ _id: req.params.id, user: req.user._id });
         if (!post) return res.status(404).json({ message: "Post not found" });
 
-        post.comments.push({ text: text.trim(), author: (author || "Anonymous").trim() });
+        post.comments.push({ text: text.trim(), author: (author || req.user.username || "Anonymous").trim() });
         await post.save();
         res.status(201).json({ message: "Comment added", data: post.comments[post.comments.length - 1] });
     } catch (error) {
@@ -333,10 +342,9 @@ app.post("/posts/:id/comment", async (req, res) => {
     }
 });
 
-// Delete a comment from a post
-app.delete("/posts/:id/comment/:commentId", async (req, res) => {
+app.delete("/posts/:id/comment/:commentId", protect, async (req, res) => {
     try {
-        const post = await postModel.findById(req.params.id);
+        const post = await postModel.findOne({ _id: req.params.id, user: req.user._id });
         if (!post) return res.status(404).json({ message: "Post not found" });
 
         const comment = post.comments.id(req.params.commentId);

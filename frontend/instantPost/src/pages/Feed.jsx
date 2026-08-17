@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
@@ -58,7 +59,7 @@ const Feed = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("https://instapost-nb20.onrender.com/posts");
+      const res = await axios.get(`${API_BASE_URL}/posts`);
       const data = res.data.data || [];
       setPosts(data);
       const initialLikes = JSON.parse(localStorage.getItem('likedPosts') || '{}');
@@ -149,7 +150,7 @@ const Feed = () => {
     setLikeCounts(prev => ({ ...prev, [postId]: prev[postId] + (was ? -1 : 1) }));
     if (!was) {
       showToast('Added to your favorites!', 'success');
-      try { await axios.put(`https://instapost-nb20.onrender.com/posts/${postId}/like`); } catch {}
+      try { await axios.put(`${API_BASE_URL}/posts/${postId}/like`); } catch {}
     }
   };
 
@@ -161,7 +162,7 @@ const Feed = () => {
     setBookmarkCounts(prev => ({ ...prev, [postId]: (prev[postId] || 0) + (was ? -1 : 1) }));
     showToast(was ? 'Removed from saved posts' : 'Post saved to bookmarks!', was ? 'info' : 'success');
     try {
-      await axios.put(`https://instapost-nb20.onrender.com/posts/${postId}/bookmark`, {
+      await axios.put(`${API_BASE_URL}/posts/${postId}/bookmark`, {
         action: was ? 'remove' : 'add'
       });
     } catch {}
@@ -181,7 +182,7 @@ const Feed = () => {
     }
     // Track the share server-side
     setShareCounts(prev => ({ ...prev, [post._id]: (prev[post._id] || 0) + 1 }));
-    try { await axios.put(`https://instapost-nb20.onrender.com/posts/${post._id}/share`); } catch {}
+    try { await axios.put(`${API_BASE_URL}/posts/${post._id}/share`); } catch {}
   };
 
   const handleDownload = async (imageUrl, caption) => {
@@ -200,7 +201,7 @@ const Feed = () => {
   const handleDelete = async (postId) => {
     if (!window.confirm("Delete this post?")) return;
     try {
-      await axios.delete(`https://instapost-nb20.onrender.com/posts/${postId}`);
+      await axios.delete(`${API_BASE_URL}/posts/${postId}`);
       setPosts(p => p.filter(x => x._id !== postId));
       showToast('Post deleted', 'success');
       if (activeLightboxIndex !== null) setActiveLightboxIndex(null);
@@ -214,7 +215,7 @@ const Feed = () => {
     setCommentLoading(true);
     try {
       const res = await axios.post(
-        `https://instapost-nb20.onrender.com/posts/${postId}/comment`,
+        `${API_BASE_URL}/posts/${postId}/comment`,
         { text: commentText.trim(), author: commentAuthor.trim() || 'Anonymous' }
       );
       const newComment = res.data.data;
@@ -230,7 +231,7 @@ const Feed = () => {
 
   const handleDeleteComment = async (postId, commentId) => {
     try {
-      await axios.delete(`https://instapost-nb20.onrender.com/posts/${postId}/comment/${commentId}`);
+      await axios.delete(`${API_BASE_URL}/posts/${postId}/comment/${commentId}`);
       setComments(prev => ({ ...prev, [postId]: (prev[postId] || []).filter(c => c._id !== commentId) }));
       showToast('Comment deleted', 'success');
     } catch {
@@ -272,7 +273,7 @@ const Feed = () => {
     // Optimistically update the local count
     setViewCounts(prev => ({ ...prev, [postId]: (prev[postId] || 0) + 1 }));
     try {
-      await axios.put(`https://instapost-nb20.onrender.com/posts/${postId}/view`);
+      await axios.put(`${API_BASE_URL}/posts/${postId}/view`);
     } catch {
       // Silently fail — view tracking is non-critical
     }
@@ -493,16 +494,17 @@ const Feed = () => {
             >
               {/* Image */}
               <div
-                className="relative overflow-hidden bg-slate-100 dark:bg-slate-950"
+                className="relative w-full h-full overflow-hidden bg-slate-100 dark:bg-slate-950"
+                style={{ width: '100%', height: '100%' }}
                 onClick={() => handleImageClick(post._id)}
                 onDoubleClick={(e) => handleDoubleTap(e, post._id)}
               >
                 <img
-                  className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                   src={post.image}
                   alt={post.caption}
                   loading="lazy"
-                  style={{ aspectRatio: index % 3 === 1 ? '4/5' : '4/3' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', aspectRatio: index % 3 === 1 ? '4/5' : '4/3' }}
                 />
 
                 {/* Double-tap heart burst overlay */}
