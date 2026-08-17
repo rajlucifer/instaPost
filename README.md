@@ -13,7 +13,7 @@ InstaPost is a premium, full-stack photo-sharing application built using **React
   * **Daily Limit**: Users are restricted to **3 photo uploads** per sliding 24-hour window. The frontend displays a real-time countdown showing exactly when the next slot opens.
   * **Total Capacity**: The application limits total storage to **15 photos** in the database. Users must delete older posts to free up slots.
 * **Responsive Styling**: Crafted using Tailwind CSS, glassmorphism UI elements, smooth micro-animations, and full dark-mode support.
-
+  **Live Link Here** :- https://insta-post-6t1u.vercel.app/
 ---
 
 ## 🛠️ Tech Stack
